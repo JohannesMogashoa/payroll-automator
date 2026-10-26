@@ -26,7 +26,7 @@ Minute values below `0` or greater than `59` are invalid. Composing whole hours 
 - The default hourly rate is `R195`.
 - A caller may supply a different positive hourly rate.
 - If no rate is supplied, the calculation uses `R195`.
-- Payroll hours may be zero but cannot be negative.
+- Calculated payroll hours may be zero but cannot be negative. Raw workbook category values may be negative when they identify a valid Prorata week; those weeks use rosters instead of actual hours and must remain distinguishable during import.
 - The payable amount is `payroll hours × hourly rate`.
 - Round only the final payable amount to two decimal places using midpoint rounding away from zero.
 

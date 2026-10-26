@@ -1,6 +1,8 @@
 namespace PayrollAutomator.Application;
 
-public sealed class PayrollApplication
+public sealed class PayrollApplication(IWorkbookImporter workbookImporter)
 {
-    public string GetStatus() => "Payroll Automator foundation is ready.";
+    public WorkbookImportResult ImportWorkbook(string sourcePath) => workbookImporter.Import(sourcePath);
+
+    public string GetStatus() => "Workbook import is ready; calculation and export workflows remain for later phases.";
 }
