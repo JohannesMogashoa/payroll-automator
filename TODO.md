@@ -18,11 +18,13 @@
 
 ## Phase 2 — Workbook import
 
-- [ ] Choose the spreadsheet library and record the decision.
-- [ ] Read the source workbook without changing the original.
-- [ ] Map employee, date, start time, end time and normal-hours columns.
-- [ ] Report invalid rows with row numbers and actionable messages.
-- [ ] Add a sample workbook fixture with non-sensitive data.
+- [x] Choose ClosedXML `0.105.1` and record the decision.
+- [x] Read recognized source sheets without changing the original.
+- [x] Map weekly and consolidated payroll-category columns from the reference workbook.
+- [x] Report invalid rows with sheet, row, cell and actionable messages.
+- [x] Add synthetic workbook fixtures with non-sensitive data.
+
+The reference workbook does not contain start/end-time columns. Phase 2 preserves raw category values and number formats; category unit conversion and payroll calculations remain in Phase 3.
 
 ## Phase 3 — Calculation engine
 
