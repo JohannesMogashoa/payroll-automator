@@ -21,8 +21,13 @@ Payroll-hours automation for importing, validating, calculating and reviewing pa
 ## Development
 
 ```bash
+dotnet restore
+dotnet build --configuration Release
+dotnet test --configuration Release
 dotnet run --project src/PayrollAutomator
 ```
+
+The project targets .NET 10. See [the payroll calculation rules](docs/payroll-rules.md) for the currently agreed business rules and boundaries.
 
 ## Project structure
 
@@ -33,6 +38,8 @@ src/PayrollAutomator/
 ├── Infrastructure/  # File and spreadsheet adapters
 ├── Presentation/    # CLI/API entry points
 └── Program.cs
+
+tests/PayrollAutomator.Tests/  # Automated domain-rule tests
 ```
 
 See [TODO.md](TODO.md) for the implementation sequence.

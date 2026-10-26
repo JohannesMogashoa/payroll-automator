@@ -13,9 +13,33 @@ public static class PayrollRules
 
         return minutes switch
         {
-            0 => 0m,
+            <= 24 => 0m,
             >= 25 and <= 45 => 0.5m,
-            _ => Math.Round(minutes / 60m, 2, MidpointRounding.AwayFromZero)
+            _ => 1m
         };
+    }
+
+    public static decimal CalculatePayableAmount(
+        decimal payrollHours,
+        decimal hourlyRate = DefaultHourlyRate)
+    {
+        if (payrollHours < 0m)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(payrollHours),
+                "Payroll hours cannot be negative.");
+        }
+
+        if (hourlyRate <= 0m)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(hourlyRate),
+                "Hourly rate must be greater than zero.");
+        }
+
+        return Math.Round(
+            payrollHours * hourlyRate,
+            2,
+            MidpointRounding.AwayFromZero);
     }
 }

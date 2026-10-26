@@ -10,11 +10,11 @@
 
 ## Phase 1 — Payroll rules
 
-- [ ] Document the agreed normal-hours calculation.
-- [ ] Document the agreed decimal conversion, including `25–45 minutes = 0.5`.
-- [ ] Document the confirmed hourly rate of `195`.
-- [ ] Define rounding, missing-value and overnight-shift behaviour.
-- [ ] Add unit tests for every rule before building the workbook importer.
+- [x] Document the agreed normal-hours calculation.
+- [x] Document the agreed decimal conversion, including `25–45 minutes = 0.5`.
+- [x] Document the confirmed hourly rate of `195`.
+- [x] Define rounding, missing-value and overnight-shift behaviour.
+- [x] Add unit tests for every rule before building the workbook importer.
 
 ## Phase 2 — Workbook import
 
@@ -50,9 +50,9 @@
 
 ## Open questions to confirm with the client
 
-- [ ] Are normal hours a fixed daily value or derived from scheduled hours?
-- [ ] How should minutes other than the agreed half-hour rule be rounded?
-- [ ] How are breaks represented and deducted?
-- [ ] How should public holidays, weekends and night work be treated?
-- [ ] Is `195` the hourly rate for every employee and every payroll period?
+- [x] Normal hours are supplied and treated as authoritative.
+- [x] Minute remainders use `0–24 = 0`, `25–45 = 0.5`, and `46–59 = 1`.
+- [x] Breaks and overnight shifts must already be reflected in supplied normal hours.
+- [x] Public holidays and weekends currently use the configured rate without a premium.
+- [x] `195` is the default hourly rate and callers may supply another positive rate.
 - [ ] What exact workbook layout must the exported file follow?
