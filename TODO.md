@@ -28,11 +28,11 @@ The reference workbook does not contain start/end-time columns. Phase 2 preserve
 
 ## Phase 3 — Calculation engine
 
-- [ ] Convert source time values into a consistent internal representation.
-- [ ] Calculate ordinary hours, overtime and payable hours.
-- [ ] Apply the agreed hourly rate.
-- [ ] Produce per-row and per-employee totals.
-- [ ] Add reconciliation checks against imported totals.
+- [x] Convert source time values into a consistent internal representation.
+- [x] Calculate ordinary hours, category hours and payable hours.
+- [x] Apply the configured hourly rate and explicit category multipliers.
+- [x] Produce per-row and per-employee totals.
+- [x] Add internal category-sum reconciliation checks; external imported-total reconciliation remains unavailable because the source workbook has no authoritative payable-total column.
 
 ## Phase 4 — Review and export
 

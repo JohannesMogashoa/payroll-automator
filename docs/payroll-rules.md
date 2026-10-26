@@ -44,3 +44,14 @@ Examples:
 - Weekend and public-holiday hours currently use the configured hourly rate without a premium.
 - Overtime categories, premiums and reconciliation belong to the calculation-engine phase and must not be inferred from these rules.
 - The exact workbook layout remains unresolved and will be decided during workbook import work.
+
+## Calculation-engine rules
+
+- Excel values with an `h:mm`-style number format are interpreted as Excel day fractions and converted to hours plus the agreed minute bucket.
+- Other numeric category values are interpreted as decimal hours and use the same minute bucket for their fractional hour.
+- Values that do not represent a whole minute are calculation errors; the engine does not silently coerce them.
+- Blank category values contribute zero hours and zero amount.
+- Negative category values identify a Prorata row. The raw value is preserved, but the row is excluded from ordinary payable totals until roster hours are supplied.
+- The base hourly rate defaults to `R195`.
+- Category multipliers are supplied through an explicit rate policy. The engine configures Normal as `1.0` by default and does not infer multipliers from category names.
+- A row total is the sum of its configured category results. Employee totals include only complete, non-Prorata rows and report incomplete rows as diagnostics.

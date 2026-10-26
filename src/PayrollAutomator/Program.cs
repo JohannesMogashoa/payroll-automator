@@ -24,4 +24,4 @@ if (args.Length == 2 && args[0].Equals("import", StringComparison.OrdinalIgnoreC
 }
 
 Console.WriteLine("Usage: dotnet run --project src/PayrollAutomator -- import <workbook.xlsx>");
-Console.WriteLine("Workbook import is implemented; calculation and export remain later phases.");
+Console.WriteLine("Workbook import and calculation are implemented; review and export remain later phases.");

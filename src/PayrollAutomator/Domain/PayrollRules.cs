@@ -37,9 +37,9 @@ public static class PayrollRules
                 "Hourly rate must be greater than zero.");
         }
 
-        return Math.Round(
-            payrollHours * hourlyRate,
-            2,
-            MidpointRounding.AwayFromZero);
+        return RoundCurrency(payrollHours * hourlyRate);
     }
+
+    public static decimal RoundCurrency(decimal amount) =>
+        Math.Round(amount, 2, MidpointRounding.AwayFromZero);
 }
