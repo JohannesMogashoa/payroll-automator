@@ -3,6 +3,7 @@ namespace PayrollAutomator.Domain;
 public static class PayrollRules
 {
     public const decimal DefaultHourlyRate = 195m;
+    public const string RuleSetVersion = "payroll-rules-v1";
 
     public static decimal ConvertMinutesToPayrollHours(int minutes)
     {
