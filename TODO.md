@@ -7,7 +7,6 @@
 - [x] Add a baseline README and implementation sequence.
 - [x] Push the initial foundation files.
 - [x] Add GitHub issue labels.
-- [ ] Add GitHub project board.
 
 ## Phase 1 - Payroll rules
 
@@ -73,7 +72,7 @@ payroll calculations remain in Phase 3.
 
 ## Current next priorities
 
-- [ ] Add automated Blazor component tests for the upload, review, confirmation and deletion flows.
+- [x] Add automated Blazor component tests for the upload, review, confirmation and deletion flows.
 - [x] Start Phase 5 with automation contracts and one-shot processing; see [docs/phase-5-automation.md](docs/phase-5-automation.md).
 - [x] Add the web automation status, scan-now and retention dry-run controls.
 - [x] Add a retention-cleanup operation with an explicit operator trigger and audit event.

@@ -1,4 +1,5 @@
 using Bunit;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using PayrollAutomator.Application;
@@ -32,6 +33,23 @@ public sealed class PayrollWorkflowComponentTests : BunitContext
         Assert.Contains("Upload workbook", cut.Markup);
         Assert.Contains("5 MB", cut.Markup);
         Assert.DoesNotContain("Import and review", cut.Markup);
+    }
+
+    [Fact]
+    public void NewRun_UploadsWorkbookAndStartsReviewableRun()
+    {
+        var fake = new FakePayrollRunService();
+        Services.Add(ServiceDescriptor.Singleton<IPayrollRunService>(fake));
+        Services.Add(ServiceDescriptor.Singleton<IOptions<PayrollStorageOptions>>(
+            Options.Create(new PayrollStorageOptions { MaxUploadBytes = 5 * 1024 * 1024 })));
+
+        var cut = Render<NewRun>();
+        cut.FindComponent<InputFile>().UploadFiles(
+            InputFileContent.CreateFromText("synthetic workbook", "synthetic.xlsx"));
+        cut.FindAll("button").Single(button => button.TextContent.Contains("Import and review")).Click();
+
+        Assert.Equal("synthetic.xlsx", fake.LastCreatedFileName);
+        Assert.Equal(1, fake.CreateCalls);
     }
 
     [Fact]
@@ -99,12 +117,20 @@ public sealed class PayrollWorkflowComponentTests : BunitContext
 
         public string? LastReviewer { get; private set; }
 
+        public string? LastCreatedFileName { get; private set; }
+
+        public int CreateCalls { get; private set; }
+
         public Task<PayrollRunSummary> CreateRunAsync(
             Stream workbook,
             string originalFileName,
             PayrollAutomator.Domain.PayrollRatePolicy? ratePolicy = null,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(runDetails!.Summary);
+            CancellationToken cancellationToken = default)
+        {
+            LastCreatedFileName = originalFileName;
+            CreateCalls++;
+            return Task.FromResult(runDetails?.Summary ?? CreateDetails(Guid.NewGuid()).Summary);
+        }
 
         public Task<IReadOnlyList<PayrollRunSummary>> ListRunsAsync(
             CancellationToken cancellationToken = default) =>
