@@ -122,3 +122,5 @@ tests/PayrollAutomator.Tests/  # Automated domain and application tests
 ```
 
 See [TODO.md](TODO.md) for the implementation sequence and current backlog.
+Repository labels and the remaining project-board setup are documented in
+[repository-management.md](docs/repository-management.md).
