@@ -74,6 +74,34 @@ public sealed class EfAutomationJobRepository(PayrollDbContext db) : IAutomation
         return updated == 1;
     }
 
+    public async Task<bool> TryRequeueFailedAsync(
+        Guid jobId,
+        DateTimeOffset nowUtc,
+        int maxAttempts,
+        CancellationToken cancellationToken = default)
+    {
+        if (maxAttempts <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxAttempts));
+        }
+
+        string failedStatus = nameof(PayrollAutomationJobStatus.Failed);
+        string queuedStatus = nameof(PayrollAutomationJobStatus.Queued);
+        int updated = await db.Database.ExecuteSqlInterpolatedAsync($"""
+            UPDATE "AutomationJobs"
+            SET "Status" = {queuedStatus},
+                "ResultCode" = NULL,
+                "FailureCode" = NULL,
+                "FailureDetails" = NULL,
+                "UpdatedAtUtc" = {nowUtc}
+            WHERE "Id" = {jobId}
+              AND "Status" = {failedStatus}
+              AND "AttemptCount" < {maxAttempts}
+            """, cancellationToken);
+
+        return updated == 1;
+    }
+
     public async Task<bool> TryUpdateOutcomeAsync(
         Guid jobId,
         string workerId,

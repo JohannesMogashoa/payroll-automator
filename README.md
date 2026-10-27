@@ -53,6 +53,22 @@ dotnet run --project src/PayrollAutomator -- export input.xlsx output.xlsx --con
 
 Errors block export. Warnings are included in the review sheet and require the explicit confirmation argument.
 
+To process one workbook into the persisted review workflow without exporting it:
+
+```bash
+dotnet run --project src/PayrollAutomator -- process path/to/payroll-hours.xlsx
+```
+
+To scan an inbox once, quarantine invalid candidates and create reviewable runs:
+
+```bash
+dotnet run --project src/PayrollAutomator -- scan path/to/inbox --once
+```
+
+Both automation commands support `--data-root <directory>`. Processing is
+idempotent for the same source path and content hash, and automated processing
+does not confirm or export payroll.
+
 To run the web application locally:
 
 ```bash

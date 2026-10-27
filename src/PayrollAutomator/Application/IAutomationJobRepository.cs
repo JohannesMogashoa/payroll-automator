@@ -23,6 +23,12 @@ public interface IAutomationJobRepository
         int maxAttempts,
         CancellationToken cancellationToken = default);
 
+    Task<bool> TryRequeueFailedAsync(
+        Guid jobId,
+        DateTimeOffset nowUtc,
+        int maxAttempts,
+        CancellationToken cancellationToken = default);
+
     Task<bool> TryUpdateOutcomeAsync(
         Guid jobId,
         string workerId,

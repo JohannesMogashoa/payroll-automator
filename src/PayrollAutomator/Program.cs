@@ -9,7 +9,9 @@ using PayrollAutomator.Infrastructure;
 
 if (args.Length > 0 &&
     (args[0].Equals("import", StringComparison.OrdinalIgnoreCase) ||
-     args[0].Equals("export", StringComparison.OrdinalIgnoreCase)))
+     args[0].Equals("export", StringComparison.OrdinalIgnoreCase) ||
+     args[0].Equals("process", StringComparison.OrdinalIgnoreCase) ||
+     args[0].Equals("scan", StringComparison.OrdinalIgnoreCase)))
 {
     await CliRunner.RunAsync(args);
     return;
@@ -41,6 +43,8 @@ builder.Services.AddDbContext<PayrollDbContext>((serviceProvider, options) =>
 });
 builder.Services.AddScoped<IPayrollRunRepository, EfPayrollRunRepository>();
 builder.Services.AddScoped<IAutomationJobRepository, EfAutomationJobRepository>();
+builder.Services.AddScoped<IWorkbookDiscovery, LocalWorkbookDiscovery>();
+builder.Services.AddScoped<PayrollAutomationProcessor>();
 builder.Services.AddSingleton<IPayrollFileStore, LocalPayrollFileStore>();
 builder.Services.AddSingleton<IWorkbookImporter, ClosedXmlWorkbookImporter>();
 builder.Services.AddSingleton<IPayrollWorkbookExporter, ClosedXmlPayrollWorkbookExporter>();
@@ -81,6 +85,25 @@ internal static class CliRunner
 {
     public static async Task RunAsync(string[] args)
     {
+        if (args.Length >= 2 && args[0].Equals("process", StringComparison.OrdinalIgnoreCase))
+        {
+            await RunAutomationAsync(args, scan: false);
+            return;
+        }
+
+        if (args.Length >= 2 && args[0].Equals("scan", StringComparison.OrdinalIgnoreCase))
+        {
+            if (args.Length < 3 || !args[2].Equals("--once", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.Error.WriteLine("Scan requires --once.");
+                Environment.ExitCode = 2;
+                return;
+            }
+
+            await RunAutomationAsync(args, scan: true);
+            return;
+        }
+
         if (args.Length == 2 && args[0].Equals("import", StringComparison.OrdinalIgnoreCase))
         {
             var application = new PayrollApplication(new ClosedXmlWorkbookImporter());
@@ -143,7 +166,78 @@ internal static class CliRunner
         Console.WriteLine("Usage:");
         Console.WriteLine("  dotnet run --project src/PayrollAutomator -- import <workbook.xlsx>");
         Console.WriteLine("  dotnet run --project src/PayrollAutomator -- export <input.xlsx> <output.xlsx> --confirm <reviewer>");
-        await Task.CompletedTask;
+        Console.WriteLine("  dotnet run --project src/PayrollAutomator -- process <workbook.xlsx> [--data-root <directory>]");
+        Console.WriteLine("  dotnet run --project src/PayrollAutomator -- scan <input-directory> --once [--data-root <directory>]");
+    }
+
+    private static async Task RunAutomationAsync(string[] args, bool scan)
+    {
+        try
+        {
+            string? dataRoot = ReadOption(args, "--data-root");
+            PayrollStorageOptions storage = new()
+            {
+                DataRoot = dataRoot ?? "data"
+            };
+            Directory.CreateDirectory(storage.DataRoot);
+            var dbOptions = new DbContextOptionsBuilder<PayrollDbContext>()
+                .UseSqlite($"Data Source={Path.Combine(storage.DataRoot, "payroll.db")}")
+                .Options;
+            await using var db = new PayrollDbContext(dbOptions);
+            await db.Database.EnsureCreatedAsync();
+            var processor = new PayrollAutomationProcessor(
+                storage,
+                new EfAutomationJobRepository(db),
+                new PayrollRunService(
+                    new EfPayrollRunRepository(db),
+                    new LocalPayrollFileStore(storage),
+                    new ClosedXmlWorkbookImporter(),
+                    new ClosedXmlPayrollWorkbookExporter()),
+                new LocalWorkbookDiscovery());
+
+            if (scan)
+            {
+                PayrollAutomationScanSummary summary = await processor.ScanOnceAsync(args[1]);
+                Console.WriteLine($"Candidates: {summary.CandidateCount}");
+                Console.WriteLine($"Processed: {summary.ProcessedCount}");
+                Console.WriteLine($"Needs review: {summary.NeedsReviewCount}");
+                Console.WriteLine($"Duplicates: {summary.DuplicateCount}");
+                Console.WriteLine($"Waiting for stability: {summary.WaitingForStabilityCount}");
+                Console.WriteLine($"Quarantined: {summary.QuarantinedCount}");
+                Console.WriteLine($"Failed: {summary.FailedCount}");
+                Environment.ExitCode = summary.HasFailures ? 1 : 0;
+            }
+            else
+            {
+                PayrollAutomationProcessResult result = await processor.ProcessFileAsync(args[1]);
+                Console.WriteLine($"Result: {result.Code}");
+                Console.WriteLine($"Status: {result.Status}");
+                Console.WriteLine($"Run: {result.PayrollRunId?.ToString() ?? "none"}");
+                Environment.ExitCode = result.Code == PayrollAutomationResultCode.Failed ? 1 : 0;
+            }
+        }
+        catch (Exception exception) when (
+            exception is ArgumentException or InvalidOperationException or IOException or DbUpdateException)
+        {
+            Console.Error.WriteLine($"Automation failed: {exception.Message}");
+            Environment.ExitCode = 1;
+        }
+    }
+
+    private static string? ReadOption(string[] args, string option)
+    {
+        int index = Array.FindIndex(args, value => value.Equals(option, StringComparison.OrdinalIgnoreCase));
+        if (index < 0)
+        {
+            return null;
+        }
+
+        if (index + 1 >= args.Length || args[index + 1].StartsWith("--", StringComparison.Ordinal))
+        {
+            throw new ArgumentException($"Option '{option}' requires a value.");
+        }
+
+        return args[index + 1];
     }
 
     private static string FormatLocation(string sheetName, int? rowNumber, string? cellAddress)

@@ -83,6 +83,36 @@ public sealed class AutomationJobRepositoryTests
     }
 
     [Fact]
+    public async Task TryRequeueFailedAsync_RequeuesOnlyWhenAttemptsRemain()
+    {
+        await using SqliteConnection connection = await OpenDatabaseAsync();
+        await using var db = CreateDatabase(connection);
+        var repository = new EfAutomationJobRepository(db);
+        Guid jobId = Guid.NewGuid();
+        PayrollAutomationJobRecord job = CreateJob(jobId);
+        job.Status = PayrollAutomationJobStatus.Failed;
+        job.AttemptCount = 1;
+        job.FailureCode = "ProcessingFailed";
+        await repository.AddAsync(job);
+
+        bool requeued = await repository.TryRequeueFailedAsync(jobId, UtcNow, maxAttempts: 3);
+        bool claimed = await repository.TryClaimAsync(
+            jobId,
+            "worker-retry",
+            UtcNow,
+            TimeSpan.FromMinutes(5),
+            maxAttempts: 3);
+
+        PayrollAutomationJobRecord retried = await repository.GetAsync(jobId)
+            ?? throw new InvalidOperationException("Job was not persisted.");
+        Assert.True(requeued);
+        Assert.True(claimed);
+        Assert.Equal(PayrollAutomationJobStatus.Processing, retried.Status);
+        Assert.Equal(2, retried.AttemptCount);
+        Assert.Null(retried.FailureCode);
+    }
+
+    [Fact]
     public async Task TryUpdateOutcomeAsync_RequiresCurrentWorkerLease()
     {
         await using SqliteConnection connection = await OpenDatabaseAsync();

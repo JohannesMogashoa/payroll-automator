@@ -22,6 +22,7 @@ public enum PayrollAutomationResultCode
 {
     Completed,
     NeedsReview,
+    WaitingForStability,
     SkippedDuplicate,
     Quarantined,
     Failed,
@@ -165,15 +166,15 @@ public static class PayrollAutomationJobStateMachine
 
 public static class PayrollAutomationConfiguration
 {
-    private static readonly string[] PathPropertyNames =
+    private static readonly (string Name, Func<PayrollAutomationPathOptions, string> GetValue)[] PathProperties =
     [
-        nameof(PayrollAutomationPathOptions.Root),
-        nameof(PayrollAutomationPathOptions.Inbox),
-        nameof(PayrollAutomationPathOptions.Processing),
-        nameof(PayrollAutomationPathOptions.Processed),
-        nameof(PayrollAutomationPathOptions.Quarantine),
-        nameof(PayrollAutomationPathOptions.Output),
-        nameof(PayrollAutomationPathOptions.Backup)
+        (nameof(PayrollAutomationPathOptions.Root), paths => paths.Root),
+        (nameof(PayrollAutomationPathOptions.Inbox), paths => paths.Inbox),
+        (nameof(PayrollAutomationPathOptions.Processing), paths => paths.Processing),
+        (nameof(PayrollAutomationPathOptions.Processed), paths => paths.Processed),
+        (nameof(PayrollAutomationPathOptions.Quarantine), paths => paths.Quarantine),
+        (nameof(PayrollAutomationPathOptions.Output), paths => paths.Output),
+        (nameof(PayrollAutomationPathOptions.Backup), paths => paths.Backup)
     ];
 
     public static IReadOnlyList<string> Validate(PayrollStorageOptions options)
@@ -219,11 +220,9 @@ public static class PayrollAutomationConfiguration
             errors.Add("Payroll:Automation:ServiceReviewer is required when automatic export is enabled.");
         }
 
-        foreach (string propertyName in PathPropertyNames)
+        foreach ((string propertyName, Func<PayrollAutomationPathOptions, string> getValue) in PathProperties)
         {
-            string? value = typeof(PayrollAutomationPathOptions)
-                .GetProperty(propertyName)?
-                .GetValue(paths) as string;
+            string value = getValue(paths);
             if (string.IsNullOrWhiteSpace(value))
             {
                 errors.Add($"Payroll:Paths:{propertyName} cannot be empty.");
