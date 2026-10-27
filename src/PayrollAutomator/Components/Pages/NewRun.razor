@@ -1,0 +1,67 @@
+@page "/runs/new"
+@inject PayrollRunService Runs
+@inject NavigationManager Navigation
+@inject IOptions<PayrollStorageOptions> StorageOptions
+
+<PageTitle>New payroll run</PageTitle>
+
+<div class="page-heading">
+    <div>
+        <p class="eyebrow">Guided workflow</p>
+        <h1>Upload workbook</h1>
+        <p class="muted">The original workbook is stored without being overwritten.</p>
+    </div>
+</div>
+
+<section class="card narrow">
+    <label for="workbook">Payroll-hours workbook</label>
+    <InputFile id="workbook" OnChange="SelectFile" accept=".xlsx" />
+    <p class="help">Only .xlsx files up to @(StorageOptions.Value.MaxUploadBytes / 1024 / 1024) MB are accepted.</p>
+
+    @if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="alert error">@error</div>
+    }
+
+    @if (selectedFile is not null)
+    {
+        <p class="selected-file">@selectedFile.Name (@(selectedFile.Size / 1024) KB)</p>
+        <button class="button primary" disabled="@busy" @onclick="ProcessFile">
+            @(busy ? "Processing..." : "Import and review")
+        </button>
+    }
+</section>
+
+@code {
+    private IBrowserFile? selectedFile;
+    private string? error;
+    private bool busy;
+
+    private void SelectFile(InputFileChangeEventArgs args)
+    {
+        selectedFile = args.File;
+        error = null;
+    }
+
+    private async Task ProcessFile()
+    {
+        if (selectedFile is null)
+        {
+            return;
+        }
+
+        busy = true;
+        error = null;
+        try
+        {
+            await using Stream content = selectedFile.OpenReadStream(StorageOptions.Value.MaxUploadBytes);
+            PayrollRunSummary run = await Runs.CreateRunAsync(content, selectedFile.Name);
+            Navigation.NavigateTo($"/runs/{run.Id}");
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or IOException)
+        {
+            error = exception.Message;
+            busy = false;
+        }
+    }
+}

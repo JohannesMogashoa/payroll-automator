@@ -1,0 +1,169 @@
+@page "/runs/{Id:guid}"
+@inject PayrollRunService Runs
+@inject NavigationManager Navigation
+
+<PageTitle>Payroll run</PageTitle>
+
+@if (details is null)
+{
+    <p>Loading run...</p>
+}
+else
+{
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">Payroll run</p>
+            <h1>@details.Summary.OriginalFileName</h1>
+            <p class="muted">Run @details.Summary.Id</p>
+        </div>
+        <span class="status @details.Summary.Status.ToString().ToLowerInvariant()">@details.Summary.Status</span>
+    </div>
+
+    <section class="metric-grid">
+        <div class="metric"><span>Rows</span><strong>@details.Review.CalculatedRowCount</strong></div>
+        <div class="metric"><span>Errors</span><strong>@details.Review.ErrorCount</strong></div>
+        <div class="metric"><span>Warnings</span><strong>@details.Review.WarningCount</strong></div>
+        <div class="metric"><span>Payable amount</span><strong>@details.Review.IncludedPayableAmount.ToString("C2", CultureInfo.GetCultureInfo("en-ZA"))</strong></div>
+    </section>
+
+    @if (details.Review.Exceptions.Count > 0)
+    {
+        <section class="card">
+            <h2>Exceptions</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Severity</th><th>Code</th><th>Location</th><th>Message</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (PayrollReviewException exception in details.Review.Exceptions)
+                        {
+                            <tr>
+                                <td><span class="severity @exception.Severity.ToString().ToLowerInvariant()">@exception.Severity</span></td>
+                                <td>@exception.Code</td>
+                                <td>@exception.SheetName row @exception.SourceRowNumber @exception.CellAddress @exception.Category</td>
+                                <td>@exception.Message</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+
+    <section class="card">
+        <h2>Employee totals</h2>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Employee number</th><th>Employee name</th><th>Hours</th><th>Payable amount</th><th>Included rows</th></tr></thead>
+                <tbody>
+                    @foreach (EmployeePayrollTotal total in details.Calculation.EmployeeTotals)
+                    {
+                        <tr>
+                            <td>@total.EmployeeNumber</td>
+                            <td>@total.EmployeeName</td>
+                            <td>@total.PayrollHours</td>
+                            <td>@total.PayableAmount.ToString("C2", CultureInfo.GetCultureInfo("en-ZA"))</td>
+                            <td>@total.IncludedRowCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    @if (details.Summary.Status == PayrollRunStatus.Exported)
+    {
+        <section class="card action-card">
+            <h2>Export ready</h2>
+            <p>Confirmed by @details.Reviewer at @details.ConfirmedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm").</p>
+            <a class="button primary" href="@($"/runs/{Id}/download")">Download export</a>
+        </section>
+    }
+    else if (details.Summary.Status != PayrollRunStatus.Deleted)
+    {
+        <section class="card action-card">
+            <h2>Confirm review</h2>
+            @if (details.Review.HasErrors)
+            {
+                <div class="alert error">Resolve the errors above before export can be confirmed.</div>
+            }
+            else
+            {
+                <label for="reviewer">Reviewer</label>
+                <input id="reviewer" @bind="reviewer" placeholder="Reviewer name" />
+                <label for="comment">Comment <span class="muted">(optional)</span></label>
+                <textarea id="comment" @bind="comment"></textarea>
+                @if (!string.IsNullOrWhiteSpace(error))
+                {
+                    <div class="alert error">@error</div>
+                }
+                <button class="button primary" disabled="@busy" @onclick="Confirm">
+                    @(busy ? "Exporting..." : "Confirm and export")
+                </button>
+            }
+        </section>
+    }
+
+    @if (details.Summary.Status != PayrollRunStatus.Deleted)
+    {
+        <section class="card danger-zone">
+            <h2>Delete run</h2>
+            <p>This removes the source workbook, export and stored calculation snapshot.</p>
+            @if (!deleteArmed)
+            {
+                <button class="button danger" @onclick="ArmDelete">Delete run</button>
+            }
+            else
+            {
+                <p><strong>Click again to confirm deletion.</strong></p>
+                <button class="button danger" @onclick="Delete">Confirm deletion</button>
+                <button class="button secondary" @onclick="() => deleteArmed = false">Cancel</button>
+            }
+        </section>
+    }
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private PayrollRunDetails? details;
+    private string reviewer = string.Empty;
+    private string comment = string.Empty;
+    private string? error;
+    private bool busy;
+    private bool deleteArmed;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        details = await Runs.GetRunAsync(Id);
+    }
+
+    private async Task Confirm()
+    {
+        busy = true;
+        error = null;
+        try
+        {
+            await Runs.ConfirmAndExportAsync(Id, reviewer, comment);
+            details = await Runs.GetRunAsync(Id);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or IOException)
+        {
+            error = exception.Message;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private void ArmDelete() => deleteArmed = true;
+
+    private async Task Delete()
+    {
+        await Runs.DeleteRunAsync(Id);
+        Navigation.NavigateTo("/");
+    }
+}

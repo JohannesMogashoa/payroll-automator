@@ -8,6 +8,8 @@ obj/
 *.sln.iml
 TestResults/
 artifacts/
+data/
+*.db
 *.log
 *.xlsx
 *.xls

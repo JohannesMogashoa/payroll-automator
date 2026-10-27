@@ -1,32 +1,34 @@
-# Payroll Automator — step-by-step TODO
+# Payroll Automator - step-by-step TODO
 
-## Phase 0 — Foundation
+## Phase 0 - Foundation
 
-- [x] Create the GitHub repository `payroll-automator`.
+- [x] Create the GitHub repository payroll-automator.
 - [x] Establish the single-project C# architecture.
 - [x] Add a baseline README and implementation sequence.
 - [x] Push the initial foundation files.
 - [ ] Add GitHub issue labels and project board.
 
-## Phase 1 — Payroll rules
+## Phase 1 - Payroll rules
 
 - [x] Document the agreed normal-hours calculation.
-- [x] Document the agreed decimal conversion, including `25–45 minutes = 0.5`.
-- [x] Document the confirmed hourly rate of `195`.
+- [x] Document the agreed decimal conversion, including 25-45 minutes = 0.5.
+- [x] Document the confirmed hourly rate of 195.
 - [x] Define rounding, missing-value and overnight-shift behaviour.
 - [x] Add unit tests for every rule before building the workbook importer.
 
-## Phase 2 — Workbook import
+## Phase 2 - Workbook import
 
-- [x] Choose ClosedXML `0.105.1` and record the decision.
+- [x] Choose ClosedXML 0.105.1 and record the decision.
 - [x] Read recognized source sheets without changing the original.
 - [x] Map weekly and consolidated payroll-category columns from the reference workbook.
 - [x] Report invalid rows with sheet, row, cell and actionable messages.
 - [x] Add synthetic workbook fixtures with non-sensitive data.
 
-The reference workbook does not contain start/end-time columns. Phase 2 preserves raw category values and number formats; category unit conversion and payroll calculations remain in Phase 3.
+The reference workbook does not contain start/end-time columns. Phase 2
+preserves raw category values and number formats; category unit conversion and
+payroll calculations remain in Phase 3.
 
-## Phase 3 — Calculation engine
+## Phase 3 - Calculation engine
 
 - [x] Convert source time values into a consistent internal representation.
 - [x] Calculate ordinary hours, category hours and payable hours.
@@ -34,7 +36,7 @@ The reference workbook does not contain start/end-time columns. Phase 2 preserve
 - [x] Produce per-row and per-employee totals.
 - [x] Add internal category-sum reconciliation checks; external imported-total reconciliation remains unavailable because the source workbook has no authoritative payable-total column.
 
-## Phase 4 — Review and export
+## Phase 4 - Review and export
 
 - [x] Add a review summary for exceptions.
 - [x] Require explicit confirmation before final export.
@@ -42,7 +44,7 @@ The reference workbook does not contain start/end-time columns. Phase 2 preserve
 - [x] Preserve calculation metadata and rule versions.
 - [x] Add an audit log.
 
-## Phase 5 — Automation
+## Phase 5 - Automation
 
 - [ ] Add watched-folder or scheduled processing.
 - [ ] Add configurable input/output locations.
@@ -50,11 +52,29 @@ The reference workbook does not contain start/end-time columns. Phase 2 preserve
 - [ ] Add backup and retention rules.
 - [ ] Add GitHub Actions build and test workflow.
 
+## Phase 6 - Web application and Docker
+
+- [x] Convert the single application to a Blazor Web App with interactive server rendering.
+- [x] Add SQLite run persistence and mounted filesystem artifact storage.
+- [x] Add upload, review, confirmation, export download and explicit deletion pages.
+- [x] Add health checking, persisted data-protection keys and configurable storage limits.
+- [x] Add a single-container Dockerfile and Cloudflare Tunnel deployment guidance.
+- [ ] Add automated Blazor component tests.
+- [x] Validate the Docker image with a running Docker daemon and restart persistence smoke test.
+
+## Current next priorities
+
+- [ ] Add automated Blazor component tests for the upload, review, confirmation and deletion flows.
+- [ ] Add a retention-cleanup operation with an explicit operator trigger and audit event.
+- [ ] Add a GitHub Actions workflow covering restore, build, tests and Docker image build.
+- [ ] Document deployment-specific Cloudflare Access and tunnel values outside the repository.
+- [ ] Revisit watched-folder or scheduled processing after the web workflow is stable.
+
 ## Open questions to confirm with the client
 
 - [x] Normal hours are supplied and treated as authoritative.
-- [x] Minute remainders use `0–24 = 0`, `25–45 = 0.5`, and `46–59 = 1`.
+- [x] Minute remainders use 0-24 = 0, 25-45 = 0.5, and 46-59 = 1.
 - [x] Breaks and overnight shifts must already be reflected in supplied normal hours.
 - [x] Public holidays and weekends currently use the configured rate without a premium.
-- [x] `195` is the default hourly rate and callers may supply another positive rate.
+- [x] 195 is the default hourly rate and callers may supply another positive rate.
 - [x] Define the initial exported workbook layout in [docs/workbook-export.md](docs/workbook-export.md).

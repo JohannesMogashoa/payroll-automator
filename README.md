@@ -4,19 +4,25 @@ Payroll-hours automation for importing, validating, calculating and reviewing pa
 
 ## Current direction
 
-- C# / .NET single application
+- C# / .NET 10 single application
+- Blazor Web App with interactive server rendering as the primary user interface
 - Folder-separated components instead of multiple class libraries
-- Spreadsheet-first MVP, with room for later integrations
+- Docker-ready deployment with SQLite and mounted artifact storage
 - Explicit review and audit trail before payroll output is finalised
 
-## Planned workflow
+The web application is the primary workflow. The CLI remains available for
+read-only imports, confirmed exports and automation compatibility.
 
-1. Import a payroll-hours workbook.
+## Payroll workflow
+
+1. Upload a payroll-hours workbook or invoke the CLI importer.
 2. Validate rows and identify exceptions.
 3. Convert time values into the agreed decimal-hour rules.
 4. Apply normal-hours, overtime and rounding rules.
-5. Produce a reviewable calculation report.
-6. Export the final payroll workbook.
+5. Review calculated rows, employee totals and diagnostics.
+6. Confirm the export with an explicit reviewer name.
+7. Download the new payroll workbook; the source workbook is never overwritten.
+8. Reopen or explicitly delete the persisted run from the web run history.
 
 ## Development
 
@@ -41,23 +47,53 @@ The command reports imported row counts and row/sheet diagnostics without printi
 
 To review and export a calculated workbook, provide a separate output path and explicit reviewer confirmation:
 
-\`\`\`bash
+```bash
 dotnet run --project src/PayrollAutomator -- export input.xlsx output.xlsx --confirm "Fictional Reviewer"
-\`\`\`
+```
 
 Errors block export. Warnings are included in the review sheet and require the explicit confirmation argument.
+
+To run the web application locally:
+
+```bash
+dotnet run --project src/PayrollAutomator
+```
+
+The web application provides the guided upload, review, confirmation and export workflow. It stores the SQLite database and run artifacts under the configured data root.
+
+Configuration uses the Payroll__ environment-variable prefix:
+
+| Variable | Local default | Purpose |
+| --- | --- | --- |
+| Payroll__DataRoot | data | SQLite database, data-protection keys and run artifacts |
+| Payroll__MaxUploadBytes | 26214400 | Maximum workbook upload size |
+| Payroll__RetentionDays | 90 | Age used to identify runs for cleanup |
+
+To build and run the Docker container:
+
+```bash
+docker build -t payroll-automator:local .
+docker run -d --name payroll-automator --restart unless-stopped -p 8080:8080 -v /srv/payroll-automator:/data payroll-automator:local
+```
+
+The container listens on port 8080; persistent storage must be mounted at
+/data. The /healthz endpoint can be used for a basic availability check.
+See [the Docker deployment guide](docs/docker-deployment.md) and
+[the web application guide](docs/web-application.md) for operational details.
 
 ## Project structure
 
 ```text
 src/PayrollAutomator/
-├── Application/     # Use cases and orchestration
-├── Domain/          # Payroll rules and models
-├── Infrastructure/  # File and spreadsheet adapters
-├── Presentation/    # CLI/API entry points
-└── Program.cs
+|-- Application/     # Use cases and orchestration
+|-- Components/      # Blazor pages, layout and routing
+|-- Domain/          # Payroll rules and models
+|-- Infrastructure/  # File, spreadsheet and persistence adapters
+|-- Presentation/    # CLI entry-point documentation
+|-- wwwroot/         # Web assets
++-- Program.cs
 
-tests/PayrollAutomator.Tests/  # Automated domain-rule tests
+tests/PayrollAutomator.Tests/  # Automated domain and application tests
 ```
 
-See [TODO.md](TODO.md) for the implementation sequence.
+See [TODO.md](TODO.md) for the implementation sequence and current backlog.
