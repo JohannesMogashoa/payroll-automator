@@ -92,6 +92,77 @@ public sealed record PayrollAutomationJobResult(
     PayrollAutomationJobStatus Status,
     string? FailureCode = null);
 
+public sealed class PayrollAutomationJobRecord
+{
+    public Guid Id { get; set; }
+
+    public string SourcePath { get; set; } = string.Empty;
+
+    public string OriginalFileName { get; set; } = string.Empty;
+
+    public string ContentHash { get; set; } = string.Empty;
+
+    public string Trigger { get; set; } = string.Empty;
+
+    public PayrollAutomationJobStatus Status { get; set; }
+
+    public PayrollAutomationResultCode? ResultCode { get; set; }
+
+    public int AttemptCount { get; set; }
+
+    public DateTimeOffset DiscoveredAtUtc { get; set; }
+
+    public DateTimeOffset UpdatedAtUtc { get; set; }
+
+    public DateTimeOffset? LeaseExpiresAtUtc { get; set; }
+
+    public string? WorkerId { get; set; }
+
+    public Guid? PayrollRunId { get; set; }
+
+    public string? FailureCode { get; set; }
+
+    public string? FailureDetails { get; set; }
+}
+
+public static class PayrollAutomationJobStateMachine
+{
+    public static bool CanTransition(
+        PayrollAutomationJobStatus current,
+        PayrollAutomationJobStatus next) =>
+        (current, next) switch
+        {
+            (PayrollAutomationJobStatus.Discovered, PayrollAutomationJobStatus.WaitingForStableFile) => true,
+            (PayrollAutomationJobStatus.Discovered, PayrollAutomationJobStatus.Queued) => true,
+            (PayrollAutomationJobStatus.Discovered, PayrollAutomationJobStatus.Quarantined) => true,
+            (PayrollAutomationJobStatus.Discovered, PayrollAutomationJobStatus.Failed) => true,
+            (PayrollAutomationJobStatus.WaitingForStableFile, PayrollAutomationJobStatus.Queued) => true,
+            (PayrollAutomationJobStatus.WaitingForStableFile, PayrollAutomationJobStatus.Quarantined) => true,
+            (PayrollAutomationJobStatus.WaitingForStableFile, PayrollAutomationJobStatus.Failed) => true,
+            (PayrollAutomationJobStatus.Queued, PayrollAutomationJobStatus.Processing) => true,
+            (PayrollAutomationJobStatus.Queued, PayrollAutomationJobStatus.Failed) => true,
+            (PayrollAutomationJobStatus.Processing, PayrollAutomationJobStatus.Queued) => true,
+            (PayrollAutomationJobStatus.Processing, PayrollAutomationJobStatus.NeedsReview) => true,
+            (PayrollAutomationJobStatus.Processing, PayrollAutomationJobStatus.Exported) => true,
+            (PayrollAutomationJobStatus.Processing, PayrollAutomationJobStatus.SkippedDuplicate) => true,
+            (PayrollAutomationJobStatus.Processing, PayrollAutomationJobStatus.Quarantined) => true,
+            (PayrollAutomationJobStatus.Processing, PayrollAutomationJobStatus.Failed) => true,
+            (PayrollAutomationJobStatus.NeedsReview, PayrollAutomationJobStatus.Exported) => true,
+            _ => false
+        };
+
+    public static void EnsureTransition(
+        PayrollAutomationJobStatus current,
+        PayrollAutomationJobStatus next)
+    {
+        if (!CanTransition(current, next))
+        {
+            throw new InvalidOperationException(
+                $"Automation job cannot transition from '{current}' to '{next}'.");
+        }
+    }
+}
+
 public static class PayrollAutomationConfiguration
 {
     private static readonly string[] PathPropertyNames =

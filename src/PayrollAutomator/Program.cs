@@ -40,6 +40,7 @@ builder.Services.AddDbContext<PayrollDbContext>((serviceProvider, options) =>
     options.UseSqlite($"Data Source={Path.Combine(storage.DataRoot, "payroll.db")}");
 });
 builder.Services.AddScoped<IPayrollRunRepository, EfPayrollRunRepository>();
+builder.Services.AddScoped<IAutomationJobRepository, EfAutomationJobRepository>();
 builder.Services.AddSingleton<IPayrollFileStore, LocalPayrollFileStore>();
 builder.Services.AddSingleton<IWorkbookImporter, ClosedXmlWorkbookImporter>();
 builder.Services.AddSingleton<IPayrollWorkbookExporter, ClosedXmlPayrollWorkbookExporter>();

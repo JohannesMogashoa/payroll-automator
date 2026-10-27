@@ -48,6 +48,7 @@ payroll calculations remain in Phase 3.
 
 - [ ] Follow the complete [Phase 5 automation plan](docs/phase-5-automation.md).
 - [x] Add automation contracts: options, job states, stable result codes, audit events and path validation.
+- [x] Add durable automation job records, source-hash identity, leases and worker-owned outcome updates.
 - [ ] Add one-shot `process` and `scan --once` commands with idempotency and quarantine handling.
 - [ ] Add configurable inbox, processing, processed, quarantine, output and backup locations.
 - [ ] Add web-visible automation status, scan-now and cleanup dry-run operations.
