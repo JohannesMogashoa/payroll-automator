@@ -103,6 +103,8 @@ The container listens on port 8080; persistent storage must be mounted at
 /data. The /healthz endpoint can be used for a basic availability check.
 See [the Docker deployment guide](docs/docker-deployment.md) and
 [the web application guide](docs/web-application.md) for operational details.
+Cloudflare Access and tunnel deployment values are intentionally kept outside
+the repository; see [the Cloudflare deployment checklist](docs/cloudflare-deployment.md).
 
 ## Project structure
 

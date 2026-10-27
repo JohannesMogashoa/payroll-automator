@@ -72,6 +72,8 @@ builder.Services.AddSingleton<IPayrollFileStore, LocalPayrollFileStore>();
 builder.Services.AddSingleton<IWorkbookImporter, ClosedXmlWorkbookImporter>();
 builder.Services.AddSingleton<IPayrollWorkbookExporter, ClosedXmlPayrollWorkbookExporter>();
 builder.Services.AddScoped<PayrollRunService>();
+builder.Services.AddScoped<IPayrollRunService>(serviceProvider =>
+    serviceProvider.GetRequiredService<PayrollRunService>());
 builder.Services.AddHostedService<PayrollAutomationWorker>();
 builder.Services.AddHealthChecks();
 builder.Services.AddRazorComponents()
