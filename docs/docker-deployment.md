@@ -38,3 +38,7 @@ The application does not automatically delete expired payroll artifacts in this 
 ## Cloudflare Tunnel
 
 Run `cloudflared` on the home server separately from the application container and route the selected subdomain to `http://localhost:8080`. Protect that hostname with a Cloudflare Access application. Tunnel tokens, Access configuration and credentials must remain outside the repository.
+
+See [cloudflare-deployment.md](./cloudflare-deployment.md) for the external
+deployment checklist and [automation-operations.md](./automation-operations.md)
+for the durable scheduled inbox behavior.

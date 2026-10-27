@@ -8,7 +8,7 @@ public sealed class PayrollRunService(
     IPayrollRunRepository repository,
     IPayrollFileStore fileStore,
     IWorkbookImporter workbookImporter,
-    IPayrollWorkbookExporter workbookExporter)
+    IPayrollWorkbookExporter workbookExporter) : IPayrollRunService
 {
     private static readonly JsonSerializerOptions SnapshotOptions = new()
     {

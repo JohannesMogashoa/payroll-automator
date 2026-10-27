@@ -1,3 +1,5 @@
+using PayrollAutomator.Domain;
+
 namespace PayrollAutomator.Application;
 
 public enum PayrollRunStatus
@@ -67,4 +69,36 @@ public interface IPayrollFileStore
         Guid runId,
         string fileName,
         CancellationToken cancellationToken = default);
+}
+
+public interface IPayrollRunService
+{
+    Task<PayrollRunSummary> CreateRunAsync(
+        Stream workbook,
+        string originalFileName,
+        PayrollRatePolicy? ratePolicy = null,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<PayrollRunSummary>> ListRunsAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<PayrollRunDetails?> GetRunAsync(
+        Guid runId,
+        CancellationToken cancellationToken = default);
+
+    Task<PayrollExportResult> ConfirmAndExportAsync(
+        Guid runId,
+        string reviewer,
+        string? comment = null,
+        CancellationToken cancellationToken = default);
+
+    Task<PayrollDownload?> OpenExportAsync(
+        Guid runId,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteRunAsync(
+        Guid runId,
+        CancellationToken cancellationToken = default,
+        string auditEventType = "RunDeleted",
+        string auditDetails = "Run artifacts and calculation snapshot were deleted by the operator.");
 }

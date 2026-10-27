@@ -6,7 +6,8 @@
 - [x] Establish the single-project C# architecture.
 - [x] Add a baseline README and implementation sequence.
 - [x] Push the initial foundation files.
-- [ ] Add GitHub issue labels and project board.
+- [x] Add GitHub issue labels.
+- [ ] Add GitHub project board.
 
 ## Phase 1 - Payroll rules
 
@@ -67,7 +68,7 @@ payroll calculations remain in Phase 3.
 - [x] Add upload, review, confirmation, export download and explicit deletion pages.
 - [x] Add health checking, persisted data-protection keys and configurable storage limits.
 - [x] Add a single-container Dockerfile and Cloudflare Tunnel deployment guidance.
-- [ ] Add automated Blazor component tests.
+- [x] Add automated Blazor component tests.
 - [x] Validate the Docker image with a running Docker daemon and restart persistence smoke test.
 
 ## Current next priorities
@@ -77,8 +78,8 @@ payroll calculations remain in Phase 3.
 - [x] Add the web automation status, scan-now and retention dry-run controls.
 - [x] Add a retention-cleanup operation with an explicit operator trigger and audit event.
 - [x] Add a GitHub Actions workflow covering restore, build, tests, Docker image build and health smoke test.
-- [ ] Document deployment-specific Cloudflare Access and tunnel values outside the repository.
-- [ ] Revisit continuous watched-folder processing after scheduled scan and restart recovery are stable.
+- [x] Document deployment-specific Cloudflare Access and tunnel values outside the repository.
+- [x] Revisit continuous watched-folder processing after scheduled scan and restart recovery are stable.
 
 ## Open questions to confirm with the client
 
