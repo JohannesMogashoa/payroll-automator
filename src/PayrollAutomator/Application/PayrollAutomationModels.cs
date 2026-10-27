@@ -241,7 +241,7 @@ public static class PayrollAutomationConfiguration
             {
                 errors.Add($"Payroll:Paths:{propertyName} cannot be empty.");
             }
-            else if (Path.IsPathRooted(value) || value.Split(['/', '\\']).Contains("..", StringComparer.Ordinal))
+            else if (IsRootedPath(value) || ContainsParentSegment(value))
             {
                 errors.Add($"Payroll:Paths:{propertyName} must be a relative path within the configured automation root.");
             }
@@ -254,6 +254,12 @@ public static class PayrollAutomationConfiguration
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentException.ThrowIfNullOrWhiteSpace(relativePath);
+
+        if (IsRootedPath(relativePath) || ContainsParentSegment(relativePath))
+        {
+            throw new InvalidOperationException(
+                "The automation path must be relative and cannot contain a parent-directory segment.");
+        }
 
         IReadOnlyList<string> errors = Validate(options);
         if (errors.Count > 0)
@@ -272,4 +278,13 @@ public static class PayrollAutomationConfiguration
 
         return resolvedPath;
     }
+
+    private static bool IsRootedPath(string path) =>
+        Path.IsPathRooted(path) ||
+        path.StartsWith("/", StringComparison.Ordinal) ||
+        path.StartsWith("\\", StringComparison.Ordinal) ||
+        (path.Length >= 2 && char.IsLetter(path[0]) && path[1] == ':');
+
+    private static bool ContainsParentSegment(string path) =>
+        path.Replace('\\', '/').Split('/').Contains("..", StringComparer.Ordinal);
 }

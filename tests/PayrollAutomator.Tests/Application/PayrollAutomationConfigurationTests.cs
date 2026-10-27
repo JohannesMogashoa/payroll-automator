@@ -71,4 +71,13 @@ public sealed class PayrollAutomationConfigurationTests
         Assert.Throws<InvalidOperationException>(() =>
             PayrollAutomationConfiguration.ResolvePath(options, "..\\outside.xlsx"));
     }
+
+    [Fact]
+    public void ResolvePath_RejectsUnixTraversal()
+    {
+        var options = new PayrollStorageOptions();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            PayrollAutomationConfiguration.ResolvePath(options, "../outside.xlsx"));
+    }
 }
