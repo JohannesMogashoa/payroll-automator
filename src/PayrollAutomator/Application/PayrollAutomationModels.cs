@@ -215,6 +215,20 @@ public static class PayrollAutomationConfiguration
             errors.Add("Payroll:Automation:MaxAttempts must be greater than zero.");
         }
 
+        string provider = automation.NotificationProvider?.Trim() ?? string.Empty;
+        if (!provider.Equals("Console", StringComparison.OrdinalIgnoreCase) &&
+            !provider.Equals("Webhook", StringComparison.OrdinalIgnoreCase) &&
+            !provider.Equals("None", StringComparison.OrdinalIgnoreCase))
+        {
+            errors.Add("Payroll:Automation:NotificationProvider must be Console, Webhook or None.");
+        }
+
+        if (provider.Equals("Webhook", StringComparison.OrdinalIgnoreCase) &&
+            string.IsNullOrWhiteSpace(automation.NotificationEndpoint))
+        {
+            errors.Add("Payroll:Automation:NotificationEndpoint is required for webhook notifications.");
+        }
+
         if (automation.AutoExportEnabled && string.IsNullOrWhiteSpace(automation.ServiceReviewer))
         {
             errors.Add("Payroll:Automation:ServiceReviewer is required when automatic export is enabled.");

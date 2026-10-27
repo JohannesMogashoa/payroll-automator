@@ -47,7 +47,8 @@ public sealed class PayrollAutomationProcessor(
     PayrollStorageOptions options,
     IAutomationJobRepository jobs,
     PayrollRunService runs,
-    IWorkbookDiscovery discovery)
+    IWorkbookDiscovery discovery,
+    PayrollAutomationNotificationDispatcher? notifications = null)
 {
     public async Task<PayrollAutomationProcessResult> ProcessFileAsync(
         string sourcePath,
@@ -63,7 +64,17 @@ public sealed class PayrollAutomationProcessor(
             options.MaxUploadBytes,
             options.Automation.FileStabilityDelay,
             cancellationToken);
-        return await ProcessCandidateAsync(candidate, trigger, quarantineInvalidFile, cancellationToken);
+        PayrollAutomationProcessResult result = await ProcessCandidateAsync(
+            candidate,
+            trigger,
+            quarantineInvalidFile,
+            cancellationToken);
+        if (notifications is not null)
+        {
+            await notifications.TrySendAsync(result, cancellationToken);
+        }
+
+        return result;
     }
 
     public async Task<PayrollAutomationScanSummary> ScanOnceAsync(
@@ -92,6 +103,11 @@ public sealed class PayrollAutomationProcessor(
                 trigger,
                 quarantineInvalidFile: true,
                 cancellationToken);
+            if (notifications is not null)
+            {
+                await notifications.TrySendAsync(result, cancellationToken);
+            }
+
             switch (result.Code)
             {
                 case PayrollAutomationResultCode.Completed:

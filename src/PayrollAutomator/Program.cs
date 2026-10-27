@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Net.Http.Headers;
 using PayrollAutomator.Application;
 using PayrollAutomator.Components;
 using PayrollAutomator.Infrastructure;
@@ -11,7 +12,9 @@ if (args.Length > 0 &&
     (args[0].Equals("import", StringComparison.OrdinalIgnoreCase) ||
      args[0].Equals("export", StringComparison.OrdinalIgnoreCase) ||
      args[0].Equals("process", StringComparison.OrdinalIgnoreCase) ||
-     args[0].Equals("scan", StringComparison.OrdinalIgnoreCase)))
+     args[0].Equals("scan", StringComparison.OrdinalIgnoreCase) ||
+     args[0].Equals("cleanup", StringComparison.OrdinalIgnoreCase) ||
+     args[0].Equals("backup", StringComparison.OrdinalIgnoreCase)))
 {
     await CliRunner.RunAsync(args);
     return;
@@ -44,12 +47,32 @@ builder.Services.AddDbContext<PayrollDbContext>((serviceProvider, options) =>
 builder.Services.AddScoped<IPayrollRunRepository, EfPayrollRunRepository>();
 builder.Services.AddScoped<IAutomationJobRepository, EfAutomationJobRepository>();
 builder.Services.AddScoped<IWorkbookDiscovery, LocalWorkbookDiscovery>();
+builder.Services.AddHttpClient("PayrollAutomationWebhook", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(10);
+    client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("PayrollAutomator", "1.0"));
+});
+builder.Services.AddScoped<IPayrollAutomationNotificationSender>(serviceProvider =>
+{
+    PayrollStorageOptions storage = serviceProvider.GetRequiredService<PayrollStorageOptions>();
+    return string.Equals(storage.Automation.NotificationProvider, "Webhook", StringComparison.OrdinalIgnoreCase)
+        ? new WebhookPayrollAutomationNotificationSender(
+            serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("PayrollAutomationWebhook"),
+            storage)
+        : string.Equals(storage.Automation.NotificationProvider, "None", StringComparison.OrdinalIgnoreCase)
+            ? new NullPayrollAutomationNotificationSender()
+            : new ConsolePayrollAutomationNotificationSender(
+                serviceProvider.GetRequiredService<ILogger<ConsolePayrollAutomationNotificationSender>>());
+});
+builder.Services.AddScoped<PayrollAutomationNotificationDispatcher>();
 builder.Services.AddScoped<PayrollAutomationProcessor>();
 builder.Services.AddScoped<PayrollAutomationOperationsService>();
+builder.Services.AddScoped<IPayrollBackupService, LocalPayrollBackupService>();
 builder.Services.AddSingleton<IPayrollFileStore, LocalPayrollFileStore>();
 builder.Services.AddSingleton<IWorkbookImporter, ClosedXmlWorkbookImporter>();
 builder.Services.AddSingleton<IPayrollWorkbookExporter, ClosedXmlPayrollWorkbookExporter>();
 builder.Services.AddScoped<PayrollRunService>();
+builder.Services.AddHostedService<PayrollAutomationWorker>();
 builder.Services.AddHealthChecks();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -102,6 +125,18 @@ internal static class CliRunner
             }
 
             await RunAutomationAsync(args, scan: true);
+            return;
+        }
+
+        if (args.Length >= 2 && args[0].Equals("cleanup", StringComparison.OrdinalIgnoreCase))
+        {
+            await RunCleanupAsync(args);
+            return;
+        }
+
+        if (args[0].Equals("backup", StringComparison.OrdinalIgnoreCase))
+        {
+            await RunBackupAsync(args);
             return;
         }
 
@@ -169,6 +204,9 @@ internal static class CliRunner
         Console.WriteLine("  dotnet run --project src/PayrollAutomator -- export <input.xlsx> <output.xlsx> --confirm <reviewer>");
         Console.WriteLine("  dotnet run --project src/PayrollAutomator -- process <workbook.xlsx> [--data-root <directory>]");
         Console.WriteLine("  dotnet run --project src/PayrollAutomator -- scan <input-directory> --once [--data-root <directory>]");
+        Console.WriteLine("  dotnet run --project src/PayrollAutomator -- cleanup --dry-run [--data-root <directory>]");
+        Console.WriteLine("  dotnet run --project src/PayrollAutomator -- cleanup --apply [--data-root <directory>]");
+        Console.WriteLine("  dotnet run --project src/PayrollAutomator -- backup [--data-root <directory>]");
     }
 
     private static async Task RunAutomationAsync(string[] args, bool scan)
@@ -223,6 +261,95 @@ internal static class CliRunner
             Console.Error.WriteLine($"Automation failed: {exception.Message}");
             Environment.ExitCode = 1;
         }
+    }
+
+    private static async Task RunCleanupAsync(string[] args)
+    {
+        try
+        {
+            bool dryRun = args.Contains("--dry-run", StringComparer.OrdinalIgnoreCase);
+            bool apply = args.Contains("--apply", StringComparer.OrdinalIgnoreCase);
+            if (dryRun == apply)
+            {
+                throw new ArgumentException("Cleanup requires exactly one of --dry-run or --apply.");
+            }
+
+            PayrollStorageOptions storage = CreateCliStorage(args);
+            await using var db = await CreateCliDatabaseAsync(storage);
+            var operations = CreateCliOperations(storage, db);
+            PayrollRetentionPreview preview = await operations.PreviewRetentionAsync(DateTimeOffset.UtcNow);
+            Console.WriteLine($"Eligible runs: {preview.EligibleRunCount}");
+            Console.WriteLine($"Eligible jobs: {preview.EligibleJobCount}");
+            if (apply)
+            {
+                PayrollRetentionApplyResult result = await operations.ApplyRetentionAsync(DateTimeOffset.UtcNow);
+                Console.WriteLine($"Deleted runs: {result.DeletedRunCount}");
+            }
+        }
+        catch (Exception exception) when (
+            exception is ArgumentException or InvalidOperationException or IOException or DbUpdateException)
+        {
+            Console.Error.WriteLine($"Cleanup failed: {exception.Message}");
+            Environment.ExitCode = 1;
+        }
+    }
+
+    private static async Task RunBackupAsync(string[] args)
+    {
+        try
+        {
+            PayrollStorageOptions storage = CreateCliStorage(args);
+            await using var db = await CreateCliDatabaseAsync(storage);
+            IPayrollBackupService backup = new LocalPayrollBackupService(storage);
+            PayrollBackupResult result = await backup.CreateAsync();
+            await backup.VerifyAsync(result.BackupDirectory);
+            Console.WriteLine($"Backup: {result.BackupDirectory}");
+            Console.WriteLine($"Manifest: {result.ManifestPath}");
+            Console.WriteLine($"Files: {result.FileCount}");
+        }
+        catch (Exception exception) when (
+            exception is ArgumentException or InvalidOperationException or IOException or DbUpdateException)
+        {
+            Console.Error.WriteLine($"Backup failed: {exception.Message}");
+            Environment.ExitCode = 1;
+        }
+    }
+
+    private static PayrollStorageOptions CreateCliStorage(string[] args) =>
+        new() { DataRoot = ReadOption(args, "--data-root") ?? "data" };
+
+    private static async Task<PayrollDbContext> CreateCliDatabaseAsync(PayrollStorageOptions storage)
+    {
+        Directory.CreateDirectory(storage.DataRoot);
+        var dbOptions = new DbContextOptionsBuilder<PayrollDbContext>()
+            .UseSqlite($"Data Source={Path.Combine(storage.DataRoot, "payroll.db")}")
+            .Options;
+        var db = new PayrollDbContext(dbOptions);
+        await db.Database.EnsureCreatedAsync();
+        return db;
+    }
+
+    private static PayrollAutomationOperationsService CreateCliOperations(
+        PayrollStorageOptions storage,
+        PayrollDbContext db)
+    {
+        var runService = new PayrollRunService(
+            new EfPayrollRunRepository(db),
+            new LocalPayrollFileStore(storage),
+            new ClosedXmlWorkbookImporter(),
+            new ClosedXmlPayrollWorkbookExporter());
+        var processor = new PayrollAutomationProcessor(
+            storage,
+            new EfAutomationJobRepository(db),
+            runService,
+            new LocalWorkbookDiscovery());
+        return new PayrollAutomationOperationsService(
+            storage,
+            new EfAutomationJobRepository(db),
+            new EfPayrollRunRepository(db),
+            processor,
+            runService,
+            new LocalPayrollBackupService(storage));
     }
 
     private static string? ReadOption(string[] args, string option)

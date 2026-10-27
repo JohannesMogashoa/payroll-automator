@@ -17,12 +17,18 @@ Payroll Automator is a .NET 10 Blazor Web App using interactive server rendering
 Open **Automation** from the navigation to view durable automation job counts,
 including queued, processing, needs-review, failed and quarantined jobs.
 
-The page provides two explicit operator actions:
+The page provides explicit operator actions:
 
 - **Scan now** scans the configured automation inbox once. Stable `.xlsx`
   files become persisted reviewable runs; invalid candidates are quarantined.
 - **Retention dry run** reports the number of old runs and terminal automation
   jobs that would be eligible for cleanup. It never deletes anything.
+- **Apply retention cleanup** deletes only old runs that are not awaiting review;
+  each deletion uses the existing run tombstone and audit entry. Needs-review
+  runs and non-terminal jobs remain protected.
+- **Create backup** creates a consistent SQLite backup plus copied run artifacts
+  under the configured backup location. A manifest records file lengths and
+  SHA-256 checksums, and the backup is verified before it is reported complete.
 
 Scheduled automation remains disabled by default. Scan now does not confirm or
 export payroll, and exports still require the existing reviewer confirmation.
@@ -45,7 +51,22 @@ data/
 
 The default local data root is `data`. Docker overrides it to `/data`. Payroll files and calculation snapshots are excluded from source control.
 
-The first release uses a 25 MB upload limit and a 90-day retention age. Expired data is not removed automatically; deletion is an explicit operator action.
+The first release uses a 25 MB upload limit and a 90-day retention age. Expired
+data is not removed automatically; cleanup is an explicit operator action.
+
+The CLI exposes the same maintenance operations:
+
+```text
+dotnet run --project src/PayrollAutomator -- cleanup --dry-run
+dotnet run --project src/PayrollAutomator -- cleanup --apply
+dotnet run --project src/PayrollAutomator -- backup
+```
+
+Scheduled automation is opt-in with `Payroll:Automation:Enabled=true`. It polls
+the configured inbox, uses the durable SQLite job lease and retry state, and
+stops cleanly on application shutdown. `NotificationProvider` supports
+`Console`, `Webhook` and `None`; webhook payloads contain operational identifiers
+and outcomes only.
 
 ## Access
 

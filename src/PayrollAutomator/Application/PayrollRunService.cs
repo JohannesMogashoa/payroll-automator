@@ -200,7 +200,9 @@ public sealed class PayrollRunService(
 
     public async Task DeleteRunAsync(
         Guid runId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string auditEventType = "RunDeleted",
+        string auditDetails = "Run artifacts and calculation snapshot were deleted by the operator.")
     {
         PayrollRunRecord run = await repository.GetRequiredAsync(runId, cancellationToken);
         if (run.Status == PayrollRunStatus.Deleted)
@@ -221,8 +223,8 @@ public sealed class PayrollRunService(
             {
                 RunId = runId,
                 TimestampUtc = now,
-                EventType = "RunDeleted",
-                Details = "Run artifacts and calculation snapshot were deleted by the operator."
+                EventType = auditEventType,
+                Details = auditDetails
             },
             cancellationToken);
     }

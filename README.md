@@ -77,8 +77,9 @@ dotnet run --project src/PayrollAutomator
 
 The web application provides the guided upload, review, confirmation and export workflow. It stores the SQLite database and run artifacts under the configured data root.
 
-The **Automation** page provides job counts, an explicit scan-now action and a
-retention dry-run preview. It does not delete data or confirm/export payroll.
+The **Automation** page provides job counts, an explicit scan-now action,
+retention dry-run/apply controls and a consistent backup action. It does not
+confirm or export payroll.
 
 Configuration uses the Payroll__ environment-variable prefix:
 
@@ -87,6 +88,9 @@ Configuration uses the Payroll__ environment-variable prefix:
 | Payroll__DataRoot | data | SQLite database, data-protection keys and run artifacts |
 | Payroll__MaxUploadBytes | 26214400 | Maximum workbook upload size |
 | Payroll__RetentionDays | 90 | Age used to identify runs for cleanup |
+| Payroll__Automation__Enabled | false | Enables the hosted scheduled inbox worker |
+| Payroll__Automation__NotificationProvider | Console | Console, Webhook or None |
+| Payroll__Automation__NotificationEndpoint | empty | Required only for webhook notifications |
 
 To build and run the Docker container:
 
