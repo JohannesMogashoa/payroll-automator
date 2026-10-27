@@ -20,7 +20,10 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Services
     .AddOptions<PayrollStorageOptions>()
-    .Bind(builder.Configuration.GetSection("Payroll"));
+    .Bind(builder.Configuration.GetSection("Payroll"))
+    .Validate(options => PayrollAutomationConfiguration.Validate(options).Count == 0,
+        "Payroll storage and automation configuration is invalid.")
+    .ValidateOnStart();
 builder.Services.AddSingleton(serviceProvider =>
     serviceProvider.GetRequiredService<IOptions<PayrollStorageOptions>>().Value);
 string configuredDataRoot = builder.Configuration["Payroll:DataRoot"] ?? "data";

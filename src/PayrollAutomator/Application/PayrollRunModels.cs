@@ -41,6 +41,10 @@ public sealed record PayrollStorageOptions
     public long MaxUploadBytes { get; init; } = 25 * 1024 * 1024;
 
     public int RetentionDays { get; init; } = 90;
+
+    public PayrollAutomationOptions Automation { get; init; } = new();
+
+    public PayrollAutomationPathOptions Paths { get; init; } = new();
 }
 
 public interface IPayrollFileStore

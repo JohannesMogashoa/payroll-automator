@@ -46,11 +46,18 @@ payroll calculations remain in Phase 3.
 
 ## Phase 5 - Automation
 
-- [ ] Add watched-folder or scheduled processing.
-- [ ] Add configurable input/output locations.
-- [ ] Add notifications for completed runs and exceptions.
-- [ ] Add backup and retention rules.
-- [ ] Add GitHub Actions build and test workflow.
+- [ ] Follow the complete [Phase 5 automation plan](docs/phase-5-automation.md).
+- [x] Add automation contracts: options, job states, stable result codes, audit events and path validation.
+- [ ] Add one-shot `process` and `scan --once` commands with idempotency and quarantine handling.
+- [ ] Add configurable inbox, processing, processed, quarantine, output and backup locations.
+- [ ] Add web-visible automation status, scan-now and cleanup dry-run operations.
+- [ ] Add durable scheduled processing with leases, retries, bounded concurrency and graceful shutdown.
+- [ ] Add redacted notifications for completed runs, review-required runs and failures.
+- [ ] Add consistent backup, manifest/checksum verification and tested restore procedure.
+- [ ] Add explicit, auditable retention cleanup with dry-run and apply modes.
+- [ ] Add GitHub Actions restore, build, test, Docker build and container smoke workflow.
+- [ ] Add automated tests for discovery, stability, duplicates, retries, notifications, backup and retention.
+- [ ] Implement Phase 5 using the dependency-ordered branching strategy in [docs/phase-5-automation.md](docs/phase-5-automation.md).
 
 ## Phase 6 - Web application and Docker
 
@@ -65,10 +72,11 @@ payroll calculations remain in Phase 3.
 ## Current next priorities
 
 - [ ] Add automated Blazor component tests for the upload, review, confirmation and deletion flows.
+- [ ] Start Phase 5 with automation contracts and one-shot processing; see [docs/phase-5-automation.md](docs/phase-5-automation.md).
 - [ ] Add a retention-cleanup operation with an explicit operator trigger and audit event.
-- [ ] Add a GitHub Actions workflow covering restore, build, tests and Docker image build.
+- [ ] Add a GitHub Actions workflow covering restore, build, tests, Docker image build and health smoke test.
 - [ ] Document deployment-specific Cloudflare Access and tunnel values outside the repository.
-- [ ] Revisit watched-folder or scheduled processing after the web workflow is stable.
+- [ ] Revisit continuous watched-folder processing after scheduled scan and restart recovery are stable.
 
 ## Open questions to confirm with the client
 
