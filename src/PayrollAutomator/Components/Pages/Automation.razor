@@ -66,6 +66,15 @@ else
             <div class="metric"><span>Protected jobs</span><strong>@retention.ProtectedJobCount</strong></div>
         </div>
         <p class="muted">Cutoff: @retention.CutoffUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</p>
+        <button class="button danger" disabled="@busy" @onclick="ApplyRetention">
+            @(busy ? "Working..." : "Apply retention cleanup")
+        </button>
+    </section>
+
+    <section class="card action-card">
+        <h2>Backup</h2>
+        <p class="muted">Creates a consistent SQLite backup and a SHA-256 manifest in the configured backup location.</p>
+        <button class="button secondary" disabled="@busy" @onclick="CreateBackup">Create backup</button>
     </section>
 }
 
@@ -106,5 +115,46 @@ else
     {
         status = await Operations.GetStatusAsync();
         retention = await Operations.PreviewRetentionAsync(DateTimeOffset.UtcNow);
+    }
+
+    private async Task ApplyRetention()
+    {
+        busy = true;
+        error = null;
+        message = null;
+        try
+        {
+            PayrollRetentionApplyResult result = await Operations.ApplyRetentionAsync(DateTimeOffset.UtcNow);
+            message = $"Retention cleanup deleted {result.DeletedRunCount} run(s). Needs-review runs remain protected.";
+            await RefreshAsync();
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or IOException)
+        {
+            error = exception.Message;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private async Task CreateBackup()
+    {
+        busy = true;
+        error = null;
+        message = null;
+        try
+        {
+            PayrollBackupResult result = await Operations.CreateBackupAsync();
+            message = $"Backup created with {result.FileCount} verified manifest file(s).";
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or IOException)
+        {
+            error = exception.Message;
+        }
+        finally
+        {
+            busy = false;
+        }
     }
 }

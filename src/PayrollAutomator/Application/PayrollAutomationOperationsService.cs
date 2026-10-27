@@ -18,11 +18,17 @@ public sealed record PayrollRetentionPreview(
     int ProtectedRunCount,
     int ProtectedJobCount);
 
+public sealed record PayrollRetentionApplyResult(
+    PayrollRetentionPreview Preview,
+    int DeletedRunCount);
+
 public sealed class PayrollAutomationOperationsService(
     PayrollStorageOptions options,
     IAutomationJobRepository jobs,
     IPayrollRunRepository runs,
-    PayrollAutomationProcessor processor)
+    PayrollAutomationProcessor processor,
+    PayrollRunService? runService = null,
+    IPayrollBackupService? backup = null)
 {
     public async Task<PayrollAutomationStatusSummary> GetStatusAsync(
         CancellationToken cancellationToken = default)
@@ -74,4 +80,38 @@ public sealed class PayrollAutomationOperationsService(
             protectedRuns,
             protectedJobs);
     }
+
+    public async Task<PayrollRetentionApplyResult> ApplyRetentionAsync(
+        DateTimeOffset nowUtc,
+        CancellationToken cancellationToken = default)
+    {
+        if (runService is null)
+        {
+            throw new InvalidOperationException("Retention apply requires a payroll run service.");
+        }
+
+        PayrollRetentionPreview preview = await PreviewRetentionAsync(nowUtc, cancellationToken);
+        IReadOnlyList<PayrollRunRecord> records = await runs.ListAsync(cancellationToken);
+        DateTimeOffset cutoffUtc = preview.CutoffUtc;
+        int deleted = 0;
+        foreach (PayrollRunRecord run in records.Where(run =>
+                     run.UpdatedAtUtc <= cutoffUtc &&
+                     run.Status is not PayrollRunStatus.NeedsReview and not PayrollRunStatus.Deleted))
+        {
+            await runService.DeleteRunAsync(
+                run.Id,
+                cancellationToken,
+                PayrollAutomationAuditEvents.CleanupCompleted,
+                "Run artifacts and calculation snapshot were deleted by the explicit retention cleanup operation.");
+            deleted++;
+        }
+
+        return new PayrollRetentionApplyResult(preview, deleted);
+    }
+
+    public Task<PayrollBackupResult> CreateBackupAsync(
+        CancellationToken cancellationToken = default) =>
+        backup is null
+            ? throw new InvalidOperationException("Backup service is not configured.")
+            : backup.CreateAsync(cancellationToken);
 }

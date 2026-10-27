@@ -86,6 +86,58 @@ public sealed class PayrollAutomationOperationsServiceTests
         Assert.Equal(now.AddDays(-30), preview.CutoffUtc);
     }
 
+    [Fact]
+    public async Task ApplyRetentionAsync_DeletesEligibleRunsWithCleanupAudit()
+    {
+        await using SqliteConnection connection = await OpenDatabaseAsync();
+        await using var db = CreateDatabase(connection);
+        DateTimeOffset now = new(2026, 10, 27, 8, 0, 0, TimeSpan.Zero);
+        Guid runId = Guid.NewGuid();
+        db.PayrollRuns.Add(new PayrollRunRecord
+        {
+            Id = runId,
+            OriginalFileName = "old-export.xlsx",
+            SourceRelativePath = "runs/old/source.xlsx",
+            Status = PayrollRunStatus.Exported,
+            CreatedAtUtc = now.AddDays(-31),
+            UpdatedAtUtc = now.AddDays(-31),
+            RuleSetVersion = "test"
+        });
+        await db.SaveChangesAsync();
+
+        string dataRoot = Path.Combine(Path.GetTempPath(), $"payroll-retention-{Guid.NewGuid():N}");
+        try
+        {
+            var options = new PayrollStorageOptions { DataRoot = dataRoot, RetentionDays = 30 };
+            var runService = new PayrollRunService(
+                new EfPayrollRunRepository(db),
+                new LocalPayrollFileStore(options),
+                new ClosedXmlWorkbookImporter(),
+                new ClosedXmlPayrollWorkbookExporter());
+            var operations = new PayrollAutomationOperationsService(
+                options,
+                new EfAutomationJobRepository(db),
+                new EfPayrollRunRepository(db),
+                null!,
+                runService);
+
+            PayrollRetentionApplyResult result = await operations.ApplyRetentionAsync(now);
+            PayrollRunRecord deleted = await db.PayrollRuns.SingleAsync(run => run.Id == runId);
+            PayrollAuditRecord audit = await db.PayrollAuditEvents.SingleAsync(audit => audit.RunId == runId);
+
+            Assert.Equal(1, result.DeletedRunCount);
+            Assert.Equal(PayrollRunStatus.Deleted, deleted.Status);
+            Assert.Equal(PayrollAutomationAuditEvents.CleanupCompleted, audit.EventType);
+        }
+        finally
+        {
+            if (Directory.Exists(dataRoot))
+            {
+                Directory.Delete(dataRoot, recursive: true);
+            }
+        }
+    }
+
     private static PayrollAutomationOperationsService CreateService(
         PayrollDbContext db,
         PayrollStorageOptions? options = null) =>
