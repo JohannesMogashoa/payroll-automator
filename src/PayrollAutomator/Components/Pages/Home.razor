@@ -1,0 +1,76 @@
+@page "/"
+@inject PayrollRunService Runs
+
+<PageTitle>Payroll runs</PageTitle>
+
+<div class="page-heading">
+    <div>
+        <p class="eyebrow">Payroll workspace</p>
+        <h1>Payroll runs</h1>
+        <p class="muted">Upload a workbook, review every exception, then confirm the export.</p>
+    </div>
+    <a class="button primary" href="/runs/new">Start new run</a>
+</div>
+
+@if (runs is null)
+{
+    <p>Loading runs...</p>
+}
+else if (runs.Count == 0)
+{
+    <section class="empty-state">
+        <h2>No runs yet</h2>
+        <p>Start with a synthetic or approved payroll-hours workbook.</p>
+        <a class="button primary" href="/runs/new">Upload workbook</a>
+    </section>
+}
+else
+{
+    <section class="card">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Workbook</th>
+                        <th>Status</th>
+                        <th>Updated</th>
+                        <th>Exceptions</th>
+                        <th>Payable amount</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (PayrollRunSummary run in runs)
+                    {
+                        <tr>
+                            <td>@run.OriginalFileName</td>
+                            <td><span class="status @run.Status.ToString().ToLowerInvariant()">@run.Status</span></td>
+                            <td>@run.UpdatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@run.ErrorCount error(s), @run.WarningCount warning(s)</td>
+                            <td>@run.IncludedPayableAmount.ToString("C2", CultureInfo.GetCultureInfo("en-ZA"))</td>
+                            <td>
+                                @if (run.Status == PayrollRunStatus.Deleted)
+                                {
+                                    <span class="muted">Deleted</span>
+                                }
+                                else
+                                {
+                                    <a href="@($"/runs/{run.Id}")">Open</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}
+
+@code {
+    private IReadOnlyList<PayrollRunSummary>? runs;
+
+    protected override async Task OnInitializedAsync()
+    {
+        runs = await Runs.ListRunsAsync();
+    }
+}
