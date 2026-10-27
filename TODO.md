@@ -36,11 +36,11 @@ The reference workbook does not contain start/end-time columns. Phase 2 preserve
 
 ## Phase 4 — Review and export
 
-- [ ] Add a review summary for exceptions.
-- [ ] Require explicit confirmation before final export.
-- [ ] Export a clean payroll workbook.
-- [ ] Preserve calculation metadata and rule versions.
-- [ ] Add an audit log.
+- [x] Add a review summary for exceptions.
+- [x] Require explicit confirmation before final export.
+- [x] Export a clean payroll workbook.
+- [x] Preserve calculation metadata and rule versions.
+- [x] Add an audit log.
 
 ## Phase 5 — Automation
 
@@ -57,4 +57,4 @@ The reference workbook does not contain start/end-time columns. Phase 2 preserve
 - [x] Breaks and overnight shifts must already be reflected in supplied normal hours.
 - [x] Public holidays and weekends currently use the configured rate without a premium.
 - [x] `195` is the default hourly rate and callers may supply another positive rate.
-- [ ] What exact workbook layout must the exported file follow?
+- [x] Define the initial exported workbook layout in [docs/workbook-export.md](docs/workbook-export.md).

@@ -23,5 +23,54 @@ if (args.Length == 2 && args[0].Equals("import", StringComparison.OrdinalIgnoreC
     return;
 }
 
-Console.WriteLine("Usage: dotnet run --project src/PayrollAutomator -- import <workbook.xlsx>");
-Console.WriteLine("Workbook import and calculation are implemented; review and export remain later phases.");
+if (args.Length == 5 && args[0].Equals("export", StringComparison.OrdinalIgnoreCase) &&
+    args[3].Equals("--confirm", StringComparison.OrdinalIgnoreCase))
+{
+    try
+    {
+        var application = new PayrollApplication(
+            new ClosedXmlWorkbookImporter(),
+            new ClosedXmlPayrollWorkbookExporter());
+        WorkbookImportResult importResult = application.ImportWorkbook(args[1]);
+        PayrollCalculationResult calculation = application.CalculateWorkbook(importResult);
+        PayrollReviewSummary review = application.ReviewCalculation(calculation);
+
+        Console.WriteLine($"${review.CalculatedRowCount}");
+        Console.WriteLine($"${review.ErrorCount}");
+        Console.WriteLine($"${review.WarningCount}");
+
+        foreach (PayrollReviewException exception in review.Exceptions)
+        {
+            string location = exception.SourceRowNumber is null
+                ? exception.SheetName
+                : $"${exception.SheetName}, row ${exception.SourceRowNumber}";
+            if (!string.IsNullOrWhiteSpace(exception.CellAddress))
+            {
+                location += $", ${exception.CellAddress}";
+            }
+
+            Console.WriteLine($"${exception.Severity}: ${exception.Code} (${location}) ${exception.Message}");
+        }
+
+        ReviewConfirmation confirmation = application.ConfirmReview(review, args[4]);
+        PayrollExportResult export = application.ExportWorkbook(
+            args[1],
+            args[2],
+            calculation,
+            review,
+            confirmation);
+
+        Console.WriteLine($"Exported: ${export.OutputPath}");
+    }
+    catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or IOException or FileNotFoundException)
+    {
+        Console.Error.WriteLine($"Export failed: ${exception.Message}");
+        Environment.ExitCode = 1;
+    }
+
+    return;
+}
+
+Console.WriteLine("Usage:");
+Console.WriteLine("  dotnet run --project src/PayrollAutomator -- import <workbook.xlsx>");
+Console.WriteLine("  dotnet run --project src/PayrollAutomator -- export <input.xlsx> <output.xlsx> --confirm <reviewer>");

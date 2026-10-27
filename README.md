@@ -29,7 +29,7 @@ dotnet run --project src/PayrollAutomator
 
 The project targets .NET 10. See [the payroll calculation rules](docs/payroll-rules.md) for the currently agreed business rules and boundaries.
 
-Workbook import currently supports the payroll-category layouts documented in [the workbook import contract](docs/workbook-import.md). The source workbook is read without being overwritten; calculation and unit conversion remain later phases.
+Workbook import currently supports the payroll-category layouts documented in [the workbook import contract](docs/workbook-import.md). The source workbook is read without being overwritten. The Phase 4 output format is documented in [the workbook export contract](docs/workbook-export.md).
 
 To import a workbook from the command line:
 
@@ -38,6 +38,14 @@ dotnet run --project src/PayrollAutomator -- import path/to/payroll-hours.xlsx
 ```
 
 The command reports imported row counts and row/sheet diagnostics without printing payroll values.
+
+To review and export a calculated workbook, provide a separate output path and explicit reviewer confirmation:
+
+\`\`\`bash
+dotnet run --project src/PayrollAutomator -- export input.xlsx output.xlsx --confirm "Fictional Reviewer"
+\`\`\`
+
+Errors block export. Warnings are included in the review sheet and require the explicit confirmation argument.
 
 ## Project structure
 

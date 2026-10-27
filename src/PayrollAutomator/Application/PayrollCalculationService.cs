@@ -34,7 +34,11 @@ public sealed class PayrollCalculationService(PayrollRatePolicy ratePolicy)
             calculatedRows,
             employeeTotals,
             importResult.Issues,
-            issues);
+            issues,
+            new PayrollCalculationMetadata(
+                PayrollRules.RuleSetVersion,
+                ratePolicy.HourlyRate,
+                ratePolicy.Multipliers));
     }
 
     private void CalculateRow(

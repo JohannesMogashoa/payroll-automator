@@ -40,6 +40,9 @@ public sealed class PayrollRatePolicy
 
     public decimal HourlyRate { get; }
 
+    public IReadOnlyDictionary<PayrollCategory, decimal> Multipliers =>
+        new Dictionary<PayrollCategory, decimal>(multipliers);
+
     public static PayrollRatePolicy Default(decimal hourlyRate = PayrollRules.DefaultHourlyRate) =>
         new(hourlyRate, new Dictionary<PayrollCategory, decimal>
         {
