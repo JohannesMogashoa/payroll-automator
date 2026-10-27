@@ -43,6 +43,10 @@ th { color: #647084; font-size: .8rem; text-transform: uppercase; }
 .status.confirmed { background: #dceaff; color: #174b9a; }
 .alert { border-radius: 8px; margin: 1rem 0; padding: .8rem 1rem; }
 .alert.error { background: #ffe1df; color: #9d2018; }
+.alert.warning { background: #fff4cc; color: #7a5700; }
+.alert.success { background: #d9f7e5; color: #146c38; }
+.compact { margin: 1rem 0 0; }
+code { background: #eef2f7; border-radius: 4px; padding: .15rem .35rem; }
 .selected-file { font-weight: 700; }
 .action-card, .danger-zone { margin-top: 1.5rem; }
 .danger-zone { border-color: #efb2ad; }

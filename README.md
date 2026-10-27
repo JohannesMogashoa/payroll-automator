@@ -77,6 +77,9 @@ dotnet run --project src/PayrollAutomator
 
 The web application provides the guided upload, review, confirmation and export workflow. It stores the SQLite database and run artifacts under the configured data root.
 
+The **Automation** page provides job counts, an explicit scan-now action and a
+retention dry-run preview. It does not delete data or confirm/export payroll.
+
 Configuration uses the Payroll__ environment-variable prefix:
 
 | Variable | Local default | Purpose |

@@ -68,9 +68,11 @@ public sealed class PayrollAutomationProcessor(
 
     public async Task<PayrollAutomationScanSummary> ScanOnceAsync(
         string inputDirectory,
+        string trigger = "ScheduledScan",
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(inputDirectory);
+        ArgumentException.ThrowIfNullOrWhiteSpace(trigger);
         IReadOnlyList<PayrollWorkbookCandidate> candidates = await discovery.DiscoverAsync(
             Path.GetFullPath(inputDirectory),
             options.MaxUploadBytes,
@@ -87,7 +89,7 @@ public sealed class PayrollAutomationProcessor(
         {
             PayrollAutomationProcessResult result = await ProcessCandidateAsync(
                 candidate,
-                "ScheduledScan",
+                trigger,
                 quarantineInvalidFile: true,
                 cancellationToken);
             switch (result.Code)

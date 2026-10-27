@@ -12,6 +12,21 @@ Payroll Automator is a .NET 10 Blazor Web App using interactive server rendering
 6. Download the clean payroll workbook.
 7. Reopen or explicitly delete the persisted run from the run history.
 
+## Automation control
+
+Open **Automation** from the navigation to view durable automation job counts,
+including queued, processing, needs-review, failed and quarantined jobs.
+
+The page provides two explicit operator actions:
+
+- **Scan now** scans the configured automation inbox once. Stable `.xlsx`
+  files become persisted reviewable runs; invalid candidates are quarantined.
+- **Retention dry run** reports the number of old runs and terminal automation
+  jobs that would be eligible for cleanup. It never deletes anything.
+
+Scheduled automation remains disabled by default. Scan now does not confirm or
+export payroll, and exports still require the existing reviewer confirmation.
+
 Errors cannot be confirmed. Warnings can be exported only after confirmation.
 
 ## Storage

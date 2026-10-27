@@ -51,7 +51,7 @@ payroll calculations remain in Phase 3.
 - [x] Add durable automation job records, source-hash identity, leases and worker-owned outcome updates.
 - [x] Add one-shot `process` and `scan --once` commands with idempotency, stability checks and quarantine handling.
 - [ ] Add configurable inbox, processing, processed, quarantine, output and backup locations.
-- [ ] Add web-visible automation status, scan-now and cleanup dry-run operations.
+- [x] Add web-visible automation status, scan-now and cleanup dry-run operations.
 - [ ] Add durable scheduled processing with leases, retries, bounded concurrency and graceful shutdown.
 - [ ] Add redacted notifications for completed runs, review-required runs and failures.
 - [ ] Add consistent backup, manifest/checksum verification and tested restore procedure.
@@ -73,7 +73,8 @@ payroll calculations remain in Phase 3.
 ## Current next priorities
 
 - [ ] Add automated Blazor component tests for the upload, review, confirmation and deletion flows.
-- [ ] Start Phase 5 with automation contracts and one-shot processing; see [docs/phase-5-automation.md](docs/phase-5-automation.md).
+- [x] Start Phase 5 with automation contracts and one-shot processing; see [docs/phase-5-automation.md](docs/phase-5-automation.md).
+- [x] Add the web automation status, scan-now and retention dry-run controls.
 - [ ] Add a retention-cleanup operation with an explicit operator trigger and audit event.
 - [ ] Add a GitHub Actions workflow covering restore, build, tests, Docker image build and health smoke test.
 - [ ] Document deployment-specific Cloudflare Access and tunnel values outside the repository.

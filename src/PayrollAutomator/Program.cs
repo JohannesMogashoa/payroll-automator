@@ -45,6 +45,7 @@ builder.Services.AddScoped<IPayrollRunRepository, EfPayrollRunRepository>();
 builder.Services.AddScoped<IAutomationJobRepository, EfAutomationJobRepository>();
 builder.Services.AddScoped<IWorkbookDiscovery, LocalWorkbookDiscovery>();
 builder.Services.AddScoped<PayrollAutomationProcessor>();
+builder.Services.AddScoped<PayrollAutomationOperationsService>();
 builder.Services.AddSingleton<IPayrollFileStore, LocalPayrollFileStore>();
 builder.Services.AddSingleton<IWorkbookImporter, ClosedXmlWorkbookImporter>();
 builder.Services.AddSingleton<IPayrollWorkbookExporter, ClosedXmlPayrollWorkbookExporter>();

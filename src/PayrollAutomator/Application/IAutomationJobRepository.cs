@@ -15,6 +15,9 @@ public interface IAutomationJobRepository
         string contentHash,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<PayrollAutomationJobRecord>> ListAsync(
+        CancellationToken cancellationToken = default);
+
     Task<bool> TryClaimAsync(
         Guid jobId,
         string workerId,

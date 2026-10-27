@@ -1,0 +1,110 @@
+@page "/automation"
+@inject PayrollAutomationOperationsService Operations
+@inject IOptions<PayrollStorageOptions> StorageOptions
+
+<PageTitle>Automation</PageTitle>
+
+<div class="page-heading">
+    <div>
+        <p class="eyebrow">Operations</p>
+        <h1>Automation control</h1>
+        <p class="muted">Scan the configured inbox and preview retention without deleting payroll data.</p>
+    </div>
+</div>
+
+@if (status is null || retention is null)
+{
+    <p>Loading automation status...</p>
+}
+else
+{
+    @if (!status.Enabled)
+    {
+        <div class="alert warning">Scheduled automation is disabled. Scan now remains an explicit operator action.</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="alert error">@error</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="alert success">@message</div>
+    }
+
+    <section class="metric-grid">
+        <div class="metric"><span>Total jobs</span><strong>@status.TotalJobs</strong></div>
+        <div class="metric"><span>Queued</span><strong>@status.QueuedJobs</strong></div>
+        <div class="metric"><span>Processing</span><strong>@status.ProcessingJobs</strong></div>
+        <div class="metric"><span>Needs review</span><strong>@status.NeedsReviewJobs</strong></div>
+        <div class="metric"><span>Failed</span><strong>@status.FailedJobs</strong></div>
+        <div class="metric"><span>Quarantined</span><strong>@status.QuarantinedJobs</strong></div>
+    </section>
+
+    @if (status.LastJobUpdatedAtUtc is not null)
+    {
+        <p class="muted">Last job activity: @status.LastJobUpdatedAtUtc.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</p>
+    }
+
+    <section class="card action-card">
+        <h2>Scan inbox now</h2>
+        <p class="muted">Configured inbox: <code>@StorageOptions.Value.Paths.Inbox</code></p>
+        <p>Stable `.xlsx` files become reviewable runs. Invalid scan candidates are quarantined. Payroll is never exported automatically.</p>
+        <button class="button primary" disabled="@busy" @onclick="ScanNow">
+            @(busy ? "Scanning..." : "Scan now")
+        </button>
+    </section>
+
+    <section class="card action-card">
+        <h2>Retention dry run</h2>
+        <p>Nothing is deleted. This preview uses the configured @StorageOptions.Value.RetentionDays-day retention age.</p>
+        <div class="metric-grid compact">
+            <div class="metric"><span>Eligible runs</span><strong>@retention.EligibleRunCount</strong></div>
+            <div class="metric"><span>Eligible jobs</span><strong>@retention.EligibleJobCount</strong></div>
+            <div class="metric"><span>Protected runs</span><strong>@retention.ProtectedRunCount</strong></div>
+            <div class="metric"><span>Protected jobs</span><strong>@retention.ProtectedJobCount</strong></div>
+        </div>
+        <p class="muted">Cutoff: @retention.CutoffUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</p>
+    </section>
+}
+
+@code {
+    private PayrollAutomationStatusSummary? status;
+    private PayrollRetentionPreview? retention;
+    private string? error;
+    private string? message;
+    private bool busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAsync();
+    }
+
+    private async Task ScanNow()
+    {
+        busy = true;
+        error = null;
+        message = null;
+        try
+        {
+            PayrollAutomationScanSummary summary = await Operations.ScanNowAsync();
+            message = $"Scan complete: {summary.ProcessedCount} processed, {summary.NeedsReviewCount} needs review, {summary.QuarantinedCount} quarantined, {summary.FailedCount} failed.";
+            await RefreshAsync();
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or IOException)
+        {
+            error = exception.Message;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        status = await Operations.GetStatusAsync();
+        retention = await Operations.PreviewRetentionAsync(DateTimeOffset.UtcNow);
+    }
+}

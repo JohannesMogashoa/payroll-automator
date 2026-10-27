@@ -31,6 +31,14 @@ public sealed class EfAutomationJobRepository(PayrollDbContext db) : IAutomation
                 job => job.SourcePath == sourcePath && job.ContentHash == contentHash,
                 cancellationToken);
 
+    public async Task<IReadOnlyList<PayrollAutomationJobRecord>> ListAsync(
+        CancellationToken cancellationToken = default) =>
+        (await db.AutomationJobs
+            .AsNoTracking()
+            .ToListAsync(cancellationToken))
+        .OrderByDescending(job => job.UpdatedAtUtc)
+        .ToArray();
+
     public async Task<bool> TryClaimAsync(
         Guid jobId,
         string workerId,
