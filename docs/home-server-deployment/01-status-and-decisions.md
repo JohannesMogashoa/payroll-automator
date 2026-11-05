@@ -120,8 +120,9 @@ The remaining deployment gates are the stable LAN DHCP reservation, Cloudflare
 route and Access verification, production environment approval protection, and
 the full recovery rehearsal.
 
-The GitHub `production` environment now requires the operator account
-`JohannesMogashoa` as its sole reviewer. The `master` branch is not yet marked
-as protected; choose the repository's pull-request review policy before adding
-that rule so the protection does not accidentally block the intended solo
-operator workflow.
+The GitHub `production` environment requires the operator account
+`JohannesMogashoa` as its sole reviewer. The `master` branch now requires a
+pull request with zero approvals, blocks direct pushes including administrators,
+and disallows force-pushes and branch deletion. CI continues to run on pushes
+and pull requests; required status checks can be added after the check context
+is finalized.
