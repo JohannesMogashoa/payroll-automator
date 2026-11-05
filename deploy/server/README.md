@@ -48,7 +48,6 @@ The workflow expects these protected `production` environment values:
 
 - `PAYROLL_DEPLOY_HOST`: Tailscale MagicDNS name or approved Tailscale address
   for `bravo`.
-- `PAYROLL_DEPLOY_HOST_KEY`: the complete SSH host-key line for that host.
 
 It expects these protected secrets:
 
@@ -57,7 +56,8 @@ It expects these protected secrets:
 
 The Tailscale federated identity must be restricted to this repository and
 workflow, issue only `tag:ci-deploy`, and have the `auth_keys` scope required by
-the Tailscale GitHub Action. The `production` environment must require manual
-approval. Do not store tunnel tokens, payroll data or server credentials in
-the repository.
+the Tailscale GitHub Action. The workflow uses `tailscale ssh` to reach the
+server-side `payroll-deploy` account, so no deploy SSH key or host-key variable
+is required. The `production` environment must require manual approval. Do not
+store tunnel tokens, payroll data or server credentials in the repository.
 

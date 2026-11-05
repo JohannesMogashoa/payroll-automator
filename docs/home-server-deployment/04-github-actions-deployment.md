@@ -21,7 +21,8 @@ initial deployment path is therefore:
 2. The workflow records the immutable commit SHA tag.
 3. The workflow joins the tailnet as an ephemeral `tag:ci-deploy` node using
    workload identity federation.
-4. The workflow transfers the exact image over Tailscale SSH to `bravo`.
+4. The workflow transfers the exact image over the Tailscale SSH client to
+   `bravo`; no separate deploy key or public SSH exposure is required.
 5. The server loads the image and runs the root-owned deployment script through
    the dedicated `payroll-deploy` account.
 6. Compose replaces the app container without removing `/data`.
@@ -34,8 +35,8 @@ retesting DNS, HTTPS and registry authentication. Do not silently change the
 registry or deployment path.
 
 If Tailscale SSH cannot reliably run the fixed deployment operation, use a
-dedicated environment-scoped SSH deploy key over Tailscale as the fallback. Do
-not expose SSH outside the tailnet or use a broad reusable key. A persistent
+dedicated environment-scoped SSH deploy key over the tailnet as the fallback.
+Do not expose SSH outside the tailnet or use a broad reusable key. A persistent
 self-hosted runner is a separate alternative only for a concrete local
 dependency.
 

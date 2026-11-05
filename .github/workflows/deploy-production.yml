@@ -17,7 +17,6 @@ jobs:
       id-token: write
     env:
       DEPLOY_HOST: ${{ vars.PAYROLL_DEPLOY_HOST }}
-      DEPLOY_HOST_KEY: ${{ vars.PAYROLL_DEPLOY_HOST_KEY }}
       DEPLOY_USER: payroll-deploy
 
     steps:
@@ -61,22 +60,13 @@ jobs:
           audience: ${{ secrets.TS_AUDIENCE }}
           tags: tag:ci-deploy
 
-      - name: Configure the deployment host key
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -n "$DEPLOY_HOST"
-          test -n "$DEPLOY_HOST_KEY"
-          install -m 0700 -d "$HOME/.ssh"
-          printf '%s\n' "$DEPLOY_HOST_KEY" > "$HOME/.ssh/known_hosts"
-          chmod 0600 "$HOME/.ssh/known_hosts"
-
       - name: Transfer and deploy the exact image
         shell: bash
         run: |
           set -euo pipefail
+          test -n "$DEPLOY_HOST"
           docker save "$IMAGE_REF" \
             | gzip --stdout \
-            | ssh -o BatchMode=yes -o RequestTTY=no "$DEPLOY_USER@$DEPLOY_HOST" \
+            | tailscale ssh "$DEPLOY_USER@$DEPLOY_HOST" \
                 "sudo -n /usr/local/sbin/payroll-automator-deploy deploy '$IMAGE_REF'"
 
