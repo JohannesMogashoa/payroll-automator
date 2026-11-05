@@ -119,3 +119,9 @@ the image with Tailscale SSH, and completed the server health check.
 The remaining deployment gates are the stable LAN DHCP reservation, Cloudflare
 route and Access verification, production environment approval protection, and
 the full recovery rehearsal.
+
+The GitHub `production` environment now requires the operator account
+`JohannesMogashoa` as its sole reviewer. The `master` branch is not yet marked
+as protected; choose the repository's pull-request review policy before adding
+that rule so the protection does not accidentally block the intended solo
+operator workflow.
