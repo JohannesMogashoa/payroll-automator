@@ -92,7 +92,7 @@ payroll calculations remain in Phase 3.
   - [x] Add the server-side Compose project and persistent paths from the [container and storage guide](docs/home-server-deployment/03-container-and-storage.md); bind the app to `127.0.0.1:8080` and preserve `/data` across updates.
   - [x] Implement daily same-disk backups with 30-day retention, manifest/checksum verification and a tested restore procedure; document the same-disk limitation.
   - [x] Extend GitHub Actions using the [deployment guide](docs/home-server-deployment/04-github-actions-deployment.md): keep PR checks, publish a private SHA-tagged GHCR image, transfer the exact image over Tailscale because `bravo` cannot currently reach outbound HTTPS, wait for `/healthz`, and retain the last known-good image for rollback.
-  - [ ] Protect the GitHub `production` environment and require manual approval; deploy only from protected `master` and never from pull requests.
+  - [x] Protect the GitHub `production` environment and require manual approval; deploy only from protected `master` and never from pull requests.
   - [ ] Add the `payroll.yngstln.dev` route to the existing host-managed Cloudflare Tunnel and configure Cloudflare Access Free with OTP restricted to the two named users; verify both authorized and unauthorized access as described in the [Cloudflare guide](docs/home-server-deployment/05-cloudflare-access.md).
   - [ ] Rehearse container restart persistence, image rollback, backup restore, Cloudflare failure recovery, Tailscale failure recovery and LAN recovery with synthetic data; complete the [operations readiness gates](docs/home-server-deployment/06-operations-and-recovery.md).
 
