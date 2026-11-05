@@ -113,8 +113,9 @@ the image with Tailscale SSH, and completed the server health check.
 | Persistent mounts | `/srv/payroll-automator/data:/data` and `/srv/payroll-automator/backups:/data/automation/backups` |
 | Health endpoint | `http://127.0.0.1:8080/healthz` returned `Healthy` |
 | Deployment path | GitHub Actions → ephemeral `tag:ci-deploy` → Tailscale SSH → `payroll-deploy` |
+| Backup service | Timer enabled and active; first backup completed with manifest/checksum verification |
+| Restore rehearsal | Passed against `/srv/payroll-automator/backups/20261105T141702506Z` using a disposable data root |
 
-The backup timer remains intentionally disabled until the first healthy
-deployment has been verified by the operator. The remaining deployment gates
-are the stable LAN DHCP reservation, timer/restore rehearsal, Cloudflare route
-and Access verification, and the full recovery rehearsal.
+The remaining deployment gates are the stable LAN DHCP reservation, Cloudflare
+route and Access verification, production environment approval protection, and
+the full recovery rehearsal.

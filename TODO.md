@@ -90,7 +90,7 @@ payroll calculations remain in Phase 3.
   - [x] Configure Tailscale workload identity federation for this repository and deployment workflow; grant `id-token: write` only to the deployment job.
   - [x] Create the dedicated `payroll-deploy` server account and a root-owned deployment script with the narrowly scoped privilege needed to load an image, update Compose and perform health checks.
   - [x] Add the server-side Compose project and persistent paths from the [container and storage guide](docs/home-server-deployment/03-container-and-storage.md); bind the app to `127.0.0.1:8080` and preserve `/data` across updates.
-  - [ ] Implement daily same-disk backups with 30-day retention, manifest/checksum verification and a tested restore procedure; document the same-disk limitation.
+  - [x] Implement daily same-disk backups with 30-day retention, manifest/checksum verification and a tested restore procedure; document the same-disk limitation.
   - [x] Extend GitHub Actions using the [deployment guide](docs/home-server-deployment/04-github-actions-deployment.md): keep PR checks, publish a private SHA-tagged GHCR image, transfer the exact image over Tailscale because `bravo` cannot currently reach outbound HTTPS, wait for `/healthz`, and retain the last known-good image for rollback.
   - [ ] Protect the GitHub `production` environment and require manual approval; deploy only from protected `master` and never from pull requests.
   - [ ] Add the `payroll.yngstln.dev` route to the existing host-managed Cloudflare Tunnel and configure Cloudflare Access Free with OTP restricted to the two named users; verify both authorized and unauthorized access as described in the [Cloudflare guide](docs/home-server-deployment/05-cloudflare-access.md).
