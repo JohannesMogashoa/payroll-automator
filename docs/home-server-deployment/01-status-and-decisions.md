@@ -95,8 +95,26 @@ server templates. They are intentionally not considered a live deployment:
 - `deploy/server/payroll-automator-deploy.example.sh` provides explicit
   deploy and rollback commands while preserving `/data`.
 
-The next external gate remains outstanding: verify the host-managed
-`cloudflared` service, reserve `bravo`'s LAN address, restore the LAN/Tailscale
-operator path, install and review the server templates, then configure the
-Tailscale and GitHub environment identities. The workflow must not be enabled
-for production until those checks pass.
+The next external gate remains outstanding: reserve `bravo`'s LAN address,
+enable and test the backup timer, complete the restore rehearsal, verify the
+Cloudflare route and Access policy, and rehearse the recovery paths.
+
+## First deployment verification (2026-11-05)
+
+The protected manual deployment workflow completed successfully for commit
+`b255576`. It built and tested the application, published the private immutable
+GHCR image, joined the tailnet using workload identity federation, transferred
+the image with Tailscale SSH, and completed the server health check.
+
+| Check | Result |
+| --- | --- |
+| Application image | `ghcr.io/johannesmogashoa/payroll-automator:b255576e4294c8316c52403a0b475745534d909d` |
+| Container | `payroll-automator`, running with loopback port `127.0.0.1:8080` |
+| Persistent mounts | `/srv/payroll-automator/data:/data` and `/srv/payroll-automator/backups:/data/automation/backups` |
+| Health endpoint | `http://127.0.0.1:8080/healthz` returned `Healthy` |
+| Deployment path | GitHub Actions → ephemeral `tag:ci-deploy` → Tailscale SSH → `payroll-deploy` |
+
+The backup timer remains intentionally disabled until the first healthy
+deployment has been verified by the operator. The remaining deployment gates
+are the stable LAN DHCP reservation, timer/restore rehearsal, Cloudflare route
+and Access verification, and the full recovery rehearsal.
