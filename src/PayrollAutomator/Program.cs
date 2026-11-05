@@ -209,6 +209,7 @@ internal static class CliRunner
         Console.WriteLine("  dotnet run --project src/PayrollAutomator -- cleanup --dry-run [--data-root <directory>]");
         Console.WriteLine("  dotnet run --project src/PayrollAutomator -- cleanup --apply [--data-root <directory>]");
         Console.WriteLine("  dotnet run --project src/PayrollAutomator -- backup [--data-root <directory>]");
+        Console.WriteLine("  dotnet run --project src/PayrollAutomator -- backup verify <backup-directory>");
     }
 
     private static async Task RunAutomationAsync(string[] args, bool scan)
@@ -300,6 +301,19 @@ internal static class CliRunner
     {
         try
         {
+            if (args.Length >= 2 && args[1].Equals("verify", StringComparison.OrdinalIgnoreCase))
+            {
+                if (args.Length != 3)
+                {
+                    throw new ArgumentException("Backup verification requires a backup directory.");
+                }
+
+                IPayrollBackupService verifier = new LocalPayrollBackupService(new PayrollStorageOptions());
+                await verifier.VerifyAsync(args[2]);
+                Console.WriteLine($"Verified backup: {Path.GetFullPath(args[2])}");
+                return;
+            }
+
             PayrollStorageOptions storage = CreateCliStorage(args);
             await using var db = await CreateCliDatabaseAsync(storage);
             IPayrollBackupService backup = new LocalPayrollBackupService(storage);
@@ -310,7 +324,7 @@ internal static class CliRunner
             Console.WriteLine($"Files: {result.FileCount}");
         }
         catch (Exception exception) when (
-            exception is ArgumentException or InvalidOperationException or IOException or DbUpdateException)
+            exception is ArgumentException or InvalidDataException or InvalidOperationException or IOException or DbUpdateException)
         {
             Console.Error.WriteLine($"Backup failed: {exception.Message}");
             Environment.ExitCode = 1;

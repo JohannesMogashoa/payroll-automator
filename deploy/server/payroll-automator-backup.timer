@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily Payroll Automator backup
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+Unit=payroll-automator-backup.service
+
+[Install]
+WantedBy=timers.target

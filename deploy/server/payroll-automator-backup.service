@@ -1,0 +1,8 @@
+[Unit]
+Description=Create and verify the Payroll Automator backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/payroll-automator-backup

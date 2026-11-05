@@ -8,7 +8,7 @@ payroll data:
 ```text
 /opt/payroll-automator/                 Compose project and deployment scripts
 /srv/payroll-automator/data/            Persistent app data mounted at /data
-/srv/payroll-automator/backups/         Daily local backup set
+/srv/payroll-automator/backups/         Daily local backup set mounted at /data/automation/backups
 ```
 
 The final paths should be created with restricted ownership and permissions.
@@ -45,7 +45,9 @@ docker compose down
 ## Persistent data and backups
 
 The application data under `/data` includes SQLite, data-protection keys and run
-artifacts. Back it up before schema or storage changes. The initial policy is:
+artifacts. The Compose project mounts `/srv/payroll-automator/backups/` at the
+application's configured backup path separately from the live data tree. Back
+it up before schema or storage changes. The initial policy is:
 
 - Store backups on the same server disk in `/srv/payroll-automator/backups/`.
 - Create a backup daily.
@@ -53,6 +55,38 @@ artifacts. Back it up before schema or storage changes. The initial policy is:
 - Write a manifest and checksums, then verify them.
 - Rehearse restoring into a temporary directory.
 - The operator owns backup and restore operations.
+
+The server installer places the following root-owned operations in
+`/usr/local/sbin`:
+
+```text
+/usr/local/sbin/payroll-automator-backup
+/usr/local/sbin/payroll-automator-restore-rehearsal
+```
+
+The backup script runs the application's SQLite-safe backup command inside the
+running container, verifies its manifest and checksums, then removes only
+timestamp-named backup directories older than 30 days. The installer also
+places a disabled-by-default systemd timer at
+`/etc/systemd/system/payroll-automator-backup.timer`. Enable it after the first
+healthy deployment:
+
+```sh
+sudo systemctl enable --now payroll-automator-backup.timer
+sudo systemctl start payroll-automator-backup.service
+sudo journalctl -u payroll-automator-backup.service --no-pager
+```
+
+Run a restore rehearsal after a successful backup. With no argument it selects
+the newest backup, verifies it, copies the database, keys and run artifacts to
+a disposable directory, and starts the exact deployed image against that copy:
+
+```sh
+sudo /usr/local/sbin/payroll-automator-restore-rehearsal
+```
+
+The rehearsal uses loopback port `18080` and removes its temporary container
+and data directory on completion. It does not modify the live `/data` tree.
 
 Same-disk backups help with accidental deletion or application corruption but do
 not protect against disk failure, theft or loss of the server. Move to an

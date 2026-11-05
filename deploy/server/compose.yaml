@@ -9,4 +9,5 @@ services:
       Payroll__DataRoot: /data
     volumes:
       - /srv/payroll-automator/data:/data
+      - /srv/payroll-automator/backups:/data/automation/backups
 

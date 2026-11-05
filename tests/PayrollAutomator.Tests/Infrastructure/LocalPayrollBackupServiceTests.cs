@@ -27,14 +27,19 @@ public sealed class LocalPayrollBackupServiceTests
             string sourceDirectory = Path.Combine(dataRoot, "runs", "synthetic");
             Directory.CreateDirectory(sourceDirectory);
             await File.WriteAllTextAsync(Path.Combine(sourceDirectory, "source.txt"), "synthetic payroll fixture");
+            string keyDirectory = Path.Combine(dataRoot, "keys");
+            Directory.CreateDirectory(keyDirectory);
+            await File.WriteAllTextAsync(Path.Combine(keyDirectory, "key.xml"), "synthetic data-protection key");
 
             var service = new LocalPayrollBackupService(options);
             PayrollBackupResult result = await service.CreateAsync();
             await service.VerifyAsync(result.BackupDirectory);
 
             Assert.True(File.Exists(Path.Combine(result.BackupDirectory, "payroll.db")));
+            Assert.True(File.Exists(Path.Combine(result.BackupDirectory, "keys", "key.xml")));
+            Assert.True(File.Exists(Path.Combine(result.BackupDirectory, "runs", "synthetic", "source.txt")));
             Assert.True(File.Exists(result.ManifestPath));
-            Assert.Equal(2, result.FileCount);
+            Assert.Equal(3, result.FileCount);
         }
         finally
         {

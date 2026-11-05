@@ -11,6 +11,7 @@ public sealed class LocalPayrollBackupService(
     ILogger<LocalPayrollBackupService>? logger = null) : IPayrollBackupService
 {
     private const string ManifestFileName = "manifest.json";
+    private static readonly string[] DataDirectoriesToBackUp = ["keys", "runs"];
 
     public async Task<PayrollBackupResult> CreateAsync(CancellationToken cancellationToken = default)
     {
@@ -34,10 +35,13 @@ public sealed class LocalPayrollBackupService(
                 source.BackupDatabase(destination);
             }
 
-            string sourceRuns = Path.GetFullPath(Path.Combine(options.DataRoot, "runs"));
-            if (Directory.Exists(sourceRuns))
+            foreach (string relativeDirectory in DataDirectoriesToBackUp)
             {
-                CopyDirectory(sourceRuns, Path.Combine(temporaryDirectory, "runs"));
+                string sourceDirectory = Path.GetFullPath(Path.Combine(options.DataRoot, relativeDirectory));
+                if (Directory.Exists(sourceDirectory))
+                {
+                    CopyDirectory(sourceDirectory, Path.Combine(temporaryDirectory, relativeDirectory));
+                }
             }
 
             List<PayrollBackupManifestEntry> entries = [];
