@@ -50,6 +50,22 @@ References: [Tailscale SSH](https://tailscale.com/docs/features/tailscale-ssh),
 [access control and grants](https://tailscale.com/docs/features/access-control),
 [GitHub workload identity federation](https://tailscale.com/docs/features/workload-identity-federation).
 
+## Current execution status (2026-11-05)
+
+- `bravo` is connected to the tailnet and reports Tailscale `1.104.4`.
+- The Windows operator environment reached `bravo` over the current LAN
+  address `192.168.3.7` using the existing `stallion` account.
+- Tailscale SSH is enabled (`RunSSH: true`) after the LAN fallback was
+  confirmed. A direct Windows Tailscale SSH attempt remains denied until the
+  tailnet policy grants access and the `payroll-deploy` account exists.
+- `bravo` now advertises `tag:payroll-server`; the Tailscale status health check
+  no longer reports that access controls deny everyone.
+- The policy template is at
+  [`deploy/tailscale/policy.hujson.example`](../../deploy/tailscale/policy.hujson.example).
+
+The router-side DHCP reservation for `192.168.3.7` remains a prerequisite for
+calling the LAN recovery path stable.
+
 ## LAN recovery and DHCP reservation
 
 Both operator devices are on the same home Wi-Fi network. Keep LAN access

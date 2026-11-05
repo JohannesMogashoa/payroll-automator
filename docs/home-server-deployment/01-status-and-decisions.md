@@ -35,13 +35,16 @@ The server-side read-only checks were completed through the SSH MCP:
 | SSH operator access | Connected as the existing `stallion` account | Keep this as recovery access; create `payroll-deploy` separately. |
 | `cloudflared` systemd state | `loaded`, `active`, `running`, `success` | Tunnel route and Access policy still need an end-to-end test after the app is deployed. |
 | Tailscale | Connected on `bravo` and the Windows workstation; client version `1.104.4` | Tailnet policy and Tailscale SSH permissions remain to be configured and verified. |
-| LAN route | Default route uses `enp3s0` via `192.168.10.1`, source `192.168.10.191` | Reserve `192.168.10.191` for `bravo` in the router. The interface also has a separate dynamic `192.168.3.7`; do not reserve that address. |
+| LAN route | Default route uses `enp3s0` via `192.168.10.1`, source `192.168.10.191`; direct operator SSH succeeded via `192.168.3.7` on the workstation’s LAN | Reserve the working LAN address `192.168.3.7` for `bravo` in the router, using the matching `enp3s0` interface. Keep the separate `192.168.10.191` route documented; do not reserve the Tailscale address. |
 | Docker / Compose | Docker `29.1.3`; Compose `2.40.3` | Current versions are suitable; the earlier Compose `2.37.1` observation is stale. |
 | Payroll app listener | Nothing is listening on `127.0.0.1:8080` yet | Expected until the first application deployment. |
 | Other host listeners | Existing services bind `0.0.0.0:3000` and `0.0.0.0:5000` | Outside this project’s scope; review separately before relying on host exposure controls. |
+| Tailscale SSH | Enabled (`RunSSH: true`); `bravo` advertises `tag:payroll-server` | The policy is now applied; end-to-end access remains pending creation of the `payroll-deploy` OS account. |
 
-The router DHCP reservation and a direct LAN SSH fallback test are still
-outstanding. No server configuration was changed during this verification.
+The router DHCP reservation is still outstanding. The direct LAN SSH fallback
+test succeeded. The only server-side change so far is enabling the Tailscale
+SSH service; the tailnet policy, deploy account and application have not been
+changed.
 
 ## Resolved decisions (2026-10-30)
 

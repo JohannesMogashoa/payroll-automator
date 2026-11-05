@@ -1,0 +1,76 @@
+// Payroll Automator home-server policy example.
+// Merge these sections into the existing tailnet policy; do not remove
+// unrelated rules for other services unless they are intentionally retired.
+{
+  // Deployment access is limited to the technical operator for now.
+  // Add the product owner here later only if they need deployment access.
+  "groups": {
+    "group:payroll-operators": [
+      "JohannesMogashoa@github"
+    ]
+  },
+
+  // Only tailnet administrators may assign the deployment tags.
+  "tagOwners": {
+    "tag:payroll-server": ["autogroup:admin"],
+    "tag:ci-deploy": ["autogroup:admin"]
+  },
+
+  // The deployment node and named operator may reach bravo only on TCP 22.
+  // The application remains loopback-bound and is not reachable over Tailscale.
+  "grants": [
+    {
+      "src": ["tag:ci-deploy"],
+      "dst": ["tag:payroll-server"],
+      "ip": ["tcp:22"]
+    },
+    {
+      "src": ["group:payroll-operators"],
+      "dst": ["tag:payroll-server"],
+      "ip": ["tcp:22"]
+    }
+  ],
+
+  // Tailscale SSH is limited to the dedicated server account.
+  // Existing LAN/OpenSSH recovery remains separate.
+  "ssh": [
+    {
+      "action": "accept",
+      "src": ["tag:ci-deploy", "group:payroll-operators"],
+      "dst": ["tag:payroll-server"],
+      "users": ["payroll-deploy"]
+    }
+  ],
+
+  // These tests reject the existing recovery account and root over Tailscale
+  // SSH for the operator. Keep them enabled when this policy is applied.
+  "sshTests": [
+    {
+      "src": "JohannesMogashoa@github",
+      "dst": ["tag:payroll-server"],
+      "accept": ["payroll-deploy"],
+      "deny": ["root", "stallion"]
+    }
+  ]
+
+  // Configure these values separately under Tailscale Admin Console > Trust
+  // credentials > Add credential > OpenID Connect. They are not policy keys.
+  // GitHub repository: JohannesMogashoa/payroll-automator
+  // GitHub owner ID: 66737801
+  // GitHub repository ID: 1433603932
+  // GitHub OIDC issuer: https://token.actions.githubusercontent.com
+  // GitHub workflow ref: JohannesMogashoa/payroll-automator/.github/workflows/deploy-production.yml@refs/heads/master
+  // GitHub immutable subject:
+  // repo:JohannesMogashoa@66737801/payroll-automator@1433603932:environment:production
+  // WIF custom claims:
+  // repository = JohannesMogashoa/payroll-automator
+  // repository_id = 1433603932
+  // repository_owner_id = 66737801
+  // workflow_ref = JohannesMogashoa/payroll-automator/.github/workflows/deploy-production.yml@refs/heads/master
+  // ref = refs/heads/master
+  // event_name = workflow_dispatch
+  // runner_environment = github-hosted
+  // WIF tag = tag:ci-deploy
+  // WIF scope = auth_keys
+}
+

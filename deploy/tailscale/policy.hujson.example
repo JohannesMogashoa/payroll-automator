@@ -1,0 +1,66 @@
+{
+  // Keep deployment access limited to the technical operator for now. Add the
+  // product owner later only if they need server administration or deployment
+  // access. Use the exact identity selector shown by the Tailscale admin
+  // console; do not infer it from a display name.
+  "groups": {
+    "group:payroll-operators": [
+      "JohannesMogashoa@github"
+    ]
+  },
+
+  // Only tailnet administrators may assign the deployment tags.
+  "tagOwners": {
+    "tag:payroll-server": ["autogroup:admin"],
+    "tag:ci-deploy": ["autogroup:admin"]
+  },
+
+  // Deployment and operator access is limited to TCP 22. The application is
+  // not reachable over the tailnet; it remains loopback-bound on the host.
+  "grants": [
+    {
+      "src": ["tag:ci-deploy"],
+      "dst": ["tag:payroll-server"],
+      "ip": ["tcp:22"]
+    },
+    {
+      "src": ["group:payroll-operators"],
+      "dst": ["tag:payroll-server"],
+      "ip": ["tcp:22"]
+    }
+  ],
+
+  // Tailscale SSH is deliberately restricted to the dedicated OS account.
+  // Existing LAN/OpenSSH recovery remains separate.
+  "ssh": [
+    {
+      "action": "accept",
+      "src": ["tag:ci-deploy", "group:payroll-operators"],
+      "dst": ["tag:payroll-server"],
+      "users": ["payroll-deploy"]
+    }
+  ]
+
+  // Deployment identity values used outside this policy file:
+  // GitHub repository: JohannesMogashoa/payroll-automator
+  // GitHub owner ID: 66737801
+  // GitHub repository ID: 1433603932
+  // GitHub workflow ref: JohannesMogashoa/payroll-automator/.github/workflows/deploy-production.yml@refs/heads/master
+  // GitHub OIDC issuer: https://token.actions.githubusercontent.com
+  // GitHub immutable OIDC subject for the protected environment:
+  // repo:JohannesMogashoa@66737801/payroll-automator@1433603932:environment:production
+  // Recommended Tailscale WIF custom claims:
+  // repository = JohannesMogashoa/payroll-automator
+  // repository_id = 1433603932
+  // repository_owner_id = 66737801
+  // workflow_ref = JohannesMogashoa/payroll-automator/.github/workflows/deploy-production.yml@refs/heads/master
+  // ref = refs/heads/master
+  // event_name = workflow_dispatch
+  // runner_environment = github-hosted
+  // Tailscale WIF tag: tag:ci-deploy
+  // Tailscale WIF scope: auth_keys
+  // Tailscale WIF audience: api.tailscale.com/<generated-client-id>
+  // Store the generated client ID and audience as GitHub environment secrets
+  // TS_OAUTH_CLIENT_ID and TS_AUDIENCE, respectively.
+}
+
