@@ -1,0 +1,12 @@
+services:
+  payroll-automator:
+    image: ${PAYROLL_IMAGE:?PAYROLL_IMAGE must be set}
+    container_name: payroll-automator
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      Payroll__DataRoot: /data
+    volumes:
+      - /srv/payroll-automator/data:/data
+

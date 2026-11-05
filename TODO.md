@@ -80,6 +80,8 @@ payroll calculations remain in Phase 3.
 - [x] Document deployment-specific Cloudflare Access and tunnel values outside the repository.
 - [x] Revisit continuous watched-folder processing after scheduled scan and restart recovery are stable.
 - [ ] Implement the home-server deployment documented in [the deployment investigation](docs/home-server-deployment-investigation.md).
+  - [x] Add the repository-side protected deployment workflow and reviewable server Compose/deploy/rollback templates.
+  - [x] Verify the host-managed `cloudflared` service and record the current LAN, Tailscale and Docker baseline.
   - [ ] Complete the pre-deployment checks in the [status guide](docs/home-server-deployment/01-status-and-decisions.md): confirm `cloudflared` is healthy, reserve a stable LAN address for `bravo`, and verify the selected recovery path.
   - [ ] Create the least-privilege Tailscale policy in the [network guide](docs/home-server-deployment/02-network-access.md): tag `bravo` as `tag:payroll-server`, use `tag:ci-deploy` for ephemeral Actions nodes, restrict deployment traffic to TCP 22, and allow Tailscale SSH only as `payroll-deploy`.
   - [ ] Configure Tailscale workload identity federation for this repository and deployment workflow; grant `id-token: write` only to the deployment job.

@@ -26,6 +26,23 @@ systemctl show cloudflared -p LoadState -p ActiveState -p SubState -p Result --n
 
 Do not share unit command lines, environment values, tokens or URL query values.
 
+## Live pre-deployment verification (2026-11-05)
+
+The server-side read-only checks were completed through the SSH MCP:
+
+| Check | Result | Follow-up |
+| --- | --- | --- |
+| SSH operator access | Connected as the existing `stallion` account | Keep this as recovery access; create `payroll-deploy` separately. |
+| `cloudflared` systemd state | `loaded`, `active`, `running`, `success` | Tunnel route and Access policy still need an end-to-end test after the app is deployed. |
+| Tailscale | Connected on `bravo` and the Windows workstation; client version `1.104.4` | Tailnet policy and Tailscale SSH permissions remain to be configured and verified. |
+| LAN route | Default route uses `enp3s0` via `192.168.10.1`, source `192.168.10.191` | Reserve `192.168.10.191` for `bravo` in the router. The interface also has a separate dynamic `192.168.3.7`; do not reserve that address. |
+| Docker / Compose | Docker `29.1.3`; Compose `2.40.3` | Current versions are suitable; the earlier Compose `2.37.1` observation is stale. |
+| Payroll app listener | Nothing is listening on `127.0.0.1:8080` yet | Expected until the first application deployment. |
+| Other host listeners | Existing services bind `0.0.0.0:3000` and `0.0.0.0:5000` | Outside this project’s scope; review separately before relying on host exposure controls. |
+
+The router DHCP reservation and a direct LAN SSH fallback test are still
+outstanding. No server configuration was changed during this verification.
+
 ## Resolved decisions (2026-10-30)
 
 - Use GitHub-hosted Actions runners and an ephemeral Tailscale node authenticated
@@ -61,3 +78,22 @@ Do not share unit command lines, environment values, tokens or URL query values.
 - Add and verify the Cloudflare Tunnel route and Access application.
 - Document recovery if the server disk, LAN, Tailscale or Cloudflare service is
   unavailable.
+
+## Repository preparation started (2026-11-05)
+
+The repository now contains a manual-only production deployment workflow and
+server templates. They are intentionally not considered a live deployment:
+
+- `.github/workflows/deploy-production.yml` runs only from `master`, requires
+  the protected `production` environment, publishes the exact commit SHA image,
+  and transfers that image over Tailscale SSH.
+- `deploy/server/compose.yaml` binds the application to `127.0.0.1:8080` and
+  mounts `/srv/payroll-automator/data` at `/data`.
+- `deploy/server/payroll-automator-deploy.example.sh` provides explicit
+  deploy and rollback commands while preserving `/data`.
+
+The next external gate remains outstanding: verify the host-managed
+`cloudflared` service, reserve `bravo`'s LAN address, restore the LAN/Tailscale
+operator path, install and review the server templates, then configure the
+Tailscale and GitHub environment identities. The workflow must not be enabled
+for production until those checks pass.
