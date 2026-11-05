@@ -32,7 +32,7 @@ set +a
 # The application performs an SQLite-consistent backup, copies keys and run
 # artifacts, writes a manifest and verifies the result before returning.
 docker exec --user 1654:1654 "$CONTAINER_NAME" \
-  dotnet /app/PayrollAutomator.dll backup
+  dotnet /app/PayrollAutomator.dll backup --data-root /data
 
 # Retention is intentionally separate from application run cleanup. Only
 # timestamp-named directories directly below the known backup root qualify.
